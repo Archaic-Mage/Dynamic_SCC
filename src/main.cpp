@@ -1,5 +1,6 @@
 #include <boost/mpi.hpp>
 #include <iostream>
+#include <chrono>
 #include "graph.hpp"
 #include "debug.hpp"
 
@@ -63,12 +64,16 @@ void findScc(const std::vector<Edge> &edges, std::unordered_map<long int, long i
 
 // Function to get the graph from the input (O(m))
 void getGraph(std::vector<Edge> &edges, long int &n) {
-  int m;
+  std::cout << "started taking input" << std::endl;
+  long int m;
   std::cin >> n >> m;
-  for (int i = 0; i < m; i++) {
-    Edge edge;
-    std::cin >> edge.from >> edge.to;
-    edges.push_back(edge);
+  std::cout << "n: " << n << " m: " << m << std::endl;
+  for (long unsigned int i = 0; i < m; i++) {
+    long int from, to;
+    std::cin >> from >> to;
+    from++, to++;
+    edges.emplace_back(from, to);
+    std::cout << "...|" << std::endl;
   }
 }
 
@@ -192,26 +197,36 @@ int main(int argc, char *argv[])
   // setting up mpi (boost)
   boost::mpi::environment env(argc, argv);
   boost::mpi::communicator world;
+  std::cout << "Hello from rank " << world.rank() << std::endl;
 
   int rank = world.rank();
   if (rank == 0) {
+    std::cout << "Hello from rank " << rank << std::endl;
     std::vector<Edge> edges;
     long int n;
     getGraph(edges, n);
     //set the SCC label to n
     SCC_LABEL = n+1;
     std::unordered_map<long int, long int> sccs;
+
+    dPrint("Finding SCC");
+    //start timer
+    auto start = std::chrono::high_resolution_clock::now();
     findScc(edges, sccs);
-    dScc(sccs);
-    SccTree sccTree;
-    makeSccTree(edges, sccTree);
-    sendSccTree(1, 0, sccTree, world);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = stop-start;
+    double time_taken = (double) duration.count() / 1e9;
+    printf("Time taken for SCC: %.9lf s", time_taken);
+    // dScc(sccs);
+    // SccTree sccTree;
+    // makeSccTree(edges, sccTree);
+    // sendSccTree(1, 0, sccTree, world);
     // dSccTree(sccTree);
   } 
   else if (rank == 1) {
-    SccTree sccTree;
-    recieveSccTree(0, 0, sccTree, world);
-    dSccTree(sccTree);
+    // SccTree sccTree;
+    // recieveSccTree(0, 0, sccTree, world);
+    // dSccTree(sccTree);
   }
 
   return 0;
