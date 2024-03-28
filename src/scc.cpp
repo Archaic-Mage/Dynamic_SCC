@@ -6,6 +6,7 @@ void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long i
     std::unordered_map<long int, bool> visited;
     std::unordered_set<long int> labels;
     std::vector<long int> order;
+    std::stack<long int> st;
     int mx = 0;
 
     for (Edge edge : edges) {
@@ -21,20 +22,33 @@ void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long i
         }
     };
     std::function<void(long int)> dfs1 = [&](long int u) {
+        st.push(u);
         visited[u] = 1;
-        for (long int v : adj[u]) {
-            if (!visited[v]) {
-                dfs1(v);
+        while(!st.empty()) {
+            long int v = st.top();
+            st.pop();
+            order.push_back(v);
+            for (long int w : adj[v]) {
+                if (!visited[w]) {
+                    st.push(w);
+                    visited[w] = 1;
+                }
             }
         }
-        order.push_back(u);
     };
     std::function<void(long int)> dfs2 = [&](long int u) {
+        st.push(u);
         visited[u] = 1;
         sccs[u] = mx;
-        for (long int v : adj_rev[u]) {
-            if (!visited[v]) {
-                dfs2(v);
+        while(!st.empty()) {
+            long int v = st.top();
+            st.pop();
+            for (long int w : adj_rev[v]) {
+                if (!visited[w]) {
+                    st.push(w);
+                    visited[w] = 1;
+                    sccs[w] = mx;
+                }
             }
         }
     };

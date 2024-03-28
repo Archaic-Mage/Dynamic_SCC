@@ -28,17 +28,6 @@ int getFreeLabel(const int &who) {
   return ret;
 }
 
-
-//Send SCC tree from one processor
-void sendSccTree(const int &to, const int &tag, SccTree &sccTree, boost::mpi::communicator &world) {
-  world.send(to, tag, sccTree);
-}
-
-//Receive SCC tree from another processor
-void recieveSccTree(const int &from, const int &tag, SccTree &sccTree, boost::mpi::communicator &world) {
-  world.recv(from, tag, sccTree);
-}
-
 // Function returns the free unused label in the process
 int getLabel() {
   int ret = SCC_LABEL;
@@ -67,13 +56,11 @@ void getGraph(std::vector<Edge> &edges, long int &n) {
   std::cout << "started taking input" << std::endl;
   long int m;
   std::cin >> n >> m;
-  std::cout << "n: " << n << " m: " << m << std::endl;
   for (long unsigned int i = 0; i < m; i++) {
     long int from, to;
     std::cin >> from >> to;
     from++, to++;
     edges.emplace_back(from, to);
-    std::cout << "...|" << std::endl;
   }
 }
 
@@ -197,19 +184,17 @@ int main(int argc, char *argv[])
   // setting up mpi (boost)
   boost::mpi::environment env(argc, argv);
   boost::mpi::communicator world;
-  std::cout << "Hello from rank " << world.rank() << std::endl;
 
   int rank = world.rank();
+  // int rank = 0;
   if (rank == 0) {
-    std::cout << "Hello from rank " << rank << std::endl;
     std::vector<Edge> edges;
     long int n;
     getGraph(edges, n);
+    std::cout << "Graph taken" << std::endl;
     //set the SCC label to n
     SCC_LABEL = n+1;
     std::unordered_map<long int, long int> sccs;
-
-    dPrint("Finding SCC");
     //start timer
     auto start = std::chrono::high_resolution_clock::now();
     findScc(edges, sccs);
@@ -217,7 +202,6 @@ int main(int argc, char *argv[])
     auto duration = stop-start;
     double time_taken = (double) duration.count() / 1e9;
     printf("Time taken for SCC: %.9lf s", time_taken);
-    // dScc(sccs);
     // SccTree sccTree;
     // makeSccTree(edges, sccTree);
     // sendSccTree(1, 0, sccTree, world);
@@ -233,6 +217,4 @@ int main(int argc, char *argv[])
 }
 
 
-// change to the adj list type representation for easy transfer
 // give set of unique number to generate from them
-// bits/std should be made to use individually
