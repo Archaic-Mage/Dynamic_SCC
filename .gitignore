@@ -1,2 +1,4 @@
 /.vscode
 /build
+
+/tests/input/i3.txt

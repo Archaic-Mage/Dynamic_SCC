@@ -14,6 +14,8 @@ class Edge {
 public:
     long int from;
     long int to;
+    Edge() {}
+    Edge(int from , int to) : from(from), to(to) {}
     friend boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version) {
