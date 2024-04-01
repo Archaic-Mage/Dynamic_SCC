@@ -33,6 +33,23 @@ void dScc(const std::unordered_map<long int, long int> &sccs) {
     }
 }
 
+void dTreeNode(const TreeNode &node) {
+    std::cout << "TreeNode: " << std::endl;
+    std::cout << "Label: " << node.label << std::endl;
+    std::cout << "Parent: " << node.parent << std::endl;
+    std::cout << "Dept: " << node.dept << std::endl;
+    std::cout << "Contains: ";
+    for (auto &i : node.contains) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Corresponds to: ";
+    for (auto &i : node.corresponds_to) {
+        std::cout << "(" << i.first.from << "->" << i.first.to << ", " << i.second.from << "->" << i.second.to << ") ";
+    }
+    std::cout << std::endl;
+}
+
 void dSccTree(const SccTree &sccTree) {
     std::cout << "SCC Tree: " << std::endl;
     std::function<void(const TreeNode&, int)> dfs = [&](const TreeNode& node, int depth) {

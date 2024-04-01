@@ -1,4 +1,15 @@
 #include "graph.hpp"
+#include <iostream>
+
+void dfs1(long int u, std::unordered_map<long int, std::vector<long int>> &adj, std::vector<long int> &order, std::unordered_map<long int, bool> &visited) {
+    visited[u] = 1;
+    for (long int v : adj[u]) {
+        if (!visited[v]) {
+            dfs1(v, adj, order, visited);
+        }
+    }
+    order.push_back(u);
+}
 
 void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long int> &sccs) {
     std::unordered_map<long int, std::vector<long int>> adj;
@@ -21,21 +32,6 @@ void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long i
             visited[label] = false;
         }
     };
-    std::function<void(long int)> dfs1 = [&](long int u) {
-        st.push(u);
-        visited[u] = 1;
-        while(!st.empty()) {
-            long int v = st.top();
-            st.pop();
-            order.push_back(v);
-            for (long int w : adj[v]) {
-                if (!visited[w]) {
-                    st.push(w);
-                    visited[w] = 1;
-                }
-            }
-        }
-    };
     std::function<void(long int)> dfs2 = [&](long int u) {
         st.push(u);
         visited[u] = 1;
@@ -53,17 +49,17 @@ void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long i
         }
     };
     mark_unvisited();
-    for (auto& i: labels) {
-        if (!visited[i]) {
-            dfs1(i);
+    for (const auto& label : labels) {
+        if (!visited[label]) {
+            dfs1(label, adj, order, visited);
         }
     }
     mark_unvisited();
-    for (long int i = order.size()-1; i >= 0; i--) {
-        long int u = order[i];
-        if (!visited[u]) {
-            dfs2(u);
+    for (long int i = order.size() - 1; i >= 0; i--) {
+        if (!visited[order[i]]) {
+            dfs2(order[i]);
             mx++;
         }
     }
+    
 }

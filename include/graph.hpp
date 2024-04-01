@@ -29,14 +29,17 @@ public:
         }
         return from < other.from;
     }
+    bool operator==(const Edge& other) const {
+        return from == other.from && to == other.to;
+    }
 };
 
 class TreeNode {
 public:
     long int label;                             // label for each SCC-Tree Node
     long int parent;
-    std::map<Edge, Edge> corresponds_to;
-    std::set<long int> contains;
+    std::vector<std::pair<Edge, Edge>> corresponds_to;
+    std::unordered_set<long int> contains;
     long int dept;
     friend boost::serialization::access;
     template<class Archive>
@@ -48,22 +51,17 @@ public:
         ar & dept;
     }
     void condenseFill(std::vector<Edge>& edges, std::unordered_map<long int, long int>& sccs);
-    void checkUnreachable(std::vector<long int>& unreachable) {
-        long int splitOn = -1;
-        for(auto& edge: corresponds_to) {
-            if(edge.second.to < 0) {
-                splitOn = -edge.first.to;
-                edge.second.to = -edge.second.to;
-            }
-        }
-
-    }
+    void checkUnreachable(std::unordered_set<long int>& unreachable);
+    void getNewLabels(std::unordered_set<long int>& unreachable, std::unordered_map<long int, long int>& new_labels);
+    void updateLabels(std::unordered_map<long int, long int>& new_labels, long int child_label);
+    void exposeToParent(TreeNode& parent, std::unordered_set<long int> unreachable);
+    void removeEdge(const Edge& edge);
 };
 
 class SccTree {
 public:
     long int root;
-    std::map<long int, TreeNode> nodes;
+    std::unordered_map<long int, TreeNode> nodes;
     SccTree() { root = -1; }
     friend boost::serialization::access;
     template<class Archive>
