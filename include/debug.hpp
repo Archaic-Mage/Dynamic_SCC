@@ -5,21 +5,25 @@
 
 //printing some information with format strings
 void dInfo(const boost::mpi::communicator& world, std::string message) {
+    // return;
     std::cout << "Rank " << world.rank() << ": " << message << std::endl;
 }
 
 // print Message
 void dPrint(const std::string &message) {
+    // return;
     std::cout << message << std::endl;
 }
 
 // print Edge
 void dEdge(const Edge &edge) {
+    // return;
     std::cout << "Edge: " << edge.from << "->" << edge.to << std::endl;
 }
 
 // Print SCC
 void dScc(const std::unordered_map<long int, long int> &sccs) {
+    // return;
     std::unordered_map<long int, std::vector<long int>> scc;
     for (auto &i : sccs) {
         scc[i.second].push_back(i.first);
@@ -34,6 +38,7 @@ void dScc(const std::unordered_map<long int, long int> &sccs) {
 }
 
 void dTreeNode(const TreeNode &node) {
+    // return;
     std::cout << "TreeNode: " << std::endl;
     std::cout << "Label: " << node.label << std::endl;
     std::cout << "Parent: " << node.parent << std::endl;
@@ -50,7 +55,8 @@ void dTreeNode(const TreeNode &node) {
     std::cout << std::endl;
 }
 
-void dSccTree(const SccTree &sccTree) {
+void dSccTree(const long int &root, const std::unordered_map<long int, TreeNode> &nodes) {
+    return;
     std::cout << "SCC Tree: " << std::endl;
     std::function<void(const TreeNode&, int)> dfs = [&](const TreeNode& node, int depth) {
         for (int i = 0; i < depth; i++) {
@@ -58,8 +64,8 @@ void dSccTree(const SccTree &sccTree) {
         }
         std::cout << node.label << std::endl;
         for (auto& child : node.contains) {
-            dfs(sccTree.nodes.at(child), depth + 1);
+            dfs(nodes.at(child), depth + 1);
         }
     };
-    dfs(sccTree.nodes.at(sccTree.root), 0);
+    dfs(nodes.at(root), 0);
 }

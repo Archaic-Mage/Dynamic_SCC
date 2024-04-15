@@ -58,15 +58,28 @@ public:
     void removeEdge(const Edge& edge);
 };
 
-class SccTree {
+class Cache {
 public:
-    long int root;
-    std::unordered_map<long int, TreeNode> nodes;
-    SccTree() { root = -1; }
-    friend boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version) {
-        ar & root;
-        ar & nodes;
+    long int dept;
+    long int label;
+    bool operator<(const Cache& other) const {
+        return dept < other.dept;
+    }
+    bool operator==(const Cache& other) const {
+        return dept == other.dept && label == other.label;
+    }
+};
+
+class DecCache : public Cache {
+public:
+    bool operator() (const Cache& a, const Cache& b) const {
+        return a.dept > b.dept;
+    }
+};
+
+class IncCache : public Cache {
+public:
+    bool operator() (const Cache& a, const Cache& b) const {
+        return a.dept < b.dept;
     }
 };
