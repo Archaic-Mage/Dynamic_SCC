@@ -509,6 +509,81 @@ void insertEdge(Edge edge) {
   insertCache.insert({lca.dept, lca.label});
 }
 
+void clearInsertCache(TreeNode &node) {
+  std::vector<Edge> edges;
+  for(auto &correspond_to: node.corresponds_to) {
+    edges.emplace_back(correspond_to.second);
+  }
+  std::unordered_map<long int, long int> sccs;
+  findScc(edges, sccs);
+
+  std::unordered_map<long int, std::vector<long int>> sccNodes;
+  for(auto &scc: sccs) {
+    sccNodes[scc.second].push_back(scc.first);
+  }
+
+  bool to_end = true;
+  for(auto &scc_nodes: sccNodes) {
+    if(scc_nodes.second.size() > 1) {
+      to_end = false;
+    }
+  }
+  if(to_end) return;
+
+  changeSccLabels(sccs, sccNodes);
+
+  sccNodes.clear();
+  for(auto &scc: sccs) {
+    sccNodes[scc.second].push_back(scc.first);
+  }
+
+  std::vector<long int> new_tree_nodes;
+  for(auto &scc: sccs) {
+    if(scc.second < 0) continue;
+    if(scc_tree_nodes.find(scc.second) == scc_tree_nodes.end()) {
+      TreeNode &child = scc_tree_nodes[scc.second];
+      child.label = scc.second;
+      child.parent = node.label;
+      child.dept = node.dept + 1;
+      node.contains.insert(sccNodes[scc.second].begin(), sccNodes[scc.second].end());
+      new_tree_nodes.push_back(child.label);
+    }
+  }
+
+  std::vector<std::pair<Edge, Edge>> temp;
+  while(!node.corresponds_to.empty()) {
+    std::pair<Edge, Edge> &correspond_to = node.corresponds_to.back();
+    node.corresponds_to.pop_back();
+    if(sccs[correspond_to.second.from] != sccs[correspond_to.second.to]) {
+      temp.emplace_back(correspond_to);
+    } else {
+      scc_tree_nodes[sccs[correspond_to.second.from]].corresponds_to.emplace_back(correspond_to);
+    }
+  }
+  node.corresponds_to = temp;
+
+  //changing connections in node
+  for(auto &correspond_to: node.corresponds_to) {
+    Edge &label_edge = correspond_to.second;
+    Edge &actual_edge = correspond_to.first;
+    label_edge.from = sccs[label_edge.from];
+    label_edge.to = sccs[label_edge.to];
+  }
+
+  //update the contains set
+  node.contains.clear();
+  for(auto &scc: sccs) {
+    if(scc.second < 0) continue;
+    node.contains.insert(scc.second);
+  }
+  dTreeNode(node);
+  for(auto &new_tree_node: new_tree_nodes) {
+    TreeNode &child = scc_tree_nodes[new_tree_node];
+    dTreeNode(child);
+    // insertCache.insert({child.dept, child.label});
+  }
+}
+
 // query if two nodes are in the same SCC
 bool query(long int v1, long int v2, std::unordered_map<long int, long int> sccs) {
   return sccs[v1] == sccs[v2];
@@ -643,6 +718,15 @@ int main(int argc, char *argv[])
       }
     }
 
+    for(int i = 1; i<world.size(); i++) {
+      world.send(i, 0, MessageType::CLR_INC_CACHE);
+    }
+
+    for(int i = 1; i<world.size(); i++) {
+      req[i] = world.irecv(i, 0, status[i]);
+    }
+    boost::mpi::wait_all(req+1, req+world.size());
+
     //answering query
     std::ofstream out("output.txt");
     for(int i = 0; i<q; i++) {
@@ -707,6 +791,15 @@ int main(int argc, char *argv[])
         world.recv(0, 1, edge);
         std::cout << "Inserted Edge: " << edge.from << " " << edge.to << std::endl;
         insertEdge(edge);
+      } else if(type == MessageType::CLR_INC_CACHE) {
+        while(!insertCache.empty()) {
+          dInfo(world, "Inserting Cache");
+          Cache c = *insertCache.begin();
+          insertCache.erase(insertCache.begin());
+          TreeNode &node = scc_tree_nodes.at(c.label);
+          clearInsertCache(node);
+        }
+        world.send(0, 0, STATUS::DONE_NO_NEW);
       }
     }
   }
