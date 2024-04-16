@@ -3,13 +3,16 @@
 #include <set>
 #include <stack>
 #include <vector>
+#include <queue>
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/serialization/map.hpp>
-#include <boost/serialization/set.hpp>
+#include <boost/serialization/unordered_map.hpp>
+#include <boost/serialization/unordered_set.hpp>
 
 class Edge {
 public:
@@ -82,4 +85,64 @@ public:
     bool operator() (const Cache& a, const Cache& b) const {
         return a.dept < b.dept;
     }
+};
+
+class MaintainSCC {
+
+    long int SCC_LABEL = 0;
+    const long int MOD = 1e10;
+    int world_size;
+    std::vector<long int> roots;
+    std::unordered_map<long int, TreeNode> scc_tree_nodes;
+    std::set<Cache, DecCache> delete_cache;
+    std::set<Cache, IncCache> insert_cache;
+    std::unordered_map<long int, int> which_rank;
+    std::unordered_map<long int, long int> sccs;
+
+    enum MessageType
+    {
+    SCC_TREE,
+    EDGE_DELETE,
+    EDGE_INSERT,
+    EDGE_QUERY,
+    SCC_TRANSFER,
+    CLR_DEC_CACHE,
+    CLR_INC_CACHE,
+    EXIT
+    };
+
+    enum STATUS
+    {
+    DONE_NO_NEW,
+    DONE_NEW,
+    TRANSFER,
+    ERROR
+    };
+
+    int getLabel();
+    // void findScc(const std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
+    void traverseNode(int node, std::vector<std::pair<long int, long int>> &new_sccs);
+    void splitGraphOnNode(std::vector<Edge> &edges, long int node);
+    void divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<Edge>> &sccEdges);
+    void makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &currentNode);
+    void makeSccTree(std::vector<Edge> &edges, std::vector<long int> &nodes);
+    void changeSccLabels(std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<long int>> &sccNodes);
+    void constructMasterNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
+    void updateMasterNode(int type, std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
+    int checkAndRemoveUnreachable(TreeNode &curr_node);
+    int checkAndDetachUnreachable(TreeNode &root_node);
+    int getLCANode(int node1, int node2);
+    void deleteEdge(Edge edge);
+    bool clearDeleteCache(TreeNode &node);
+    void deleteEdgeFromMaster(Edge edge);
+    void insertEdge(Edge edge);
+    void clearInsertCache(TreeNode &node);
+    void processMessage();
+public:
+    bool query(long int v1, long int v2);
+    void deleteEdges(std::vector<Edge> &decrement);
+    void insertEdges(std::vector<Edge> &increament);
+    void endAll();
+    MaintainSCC(long int n, std::vector<Edge> &edges);
+    ~MaintainSCC();
 };
