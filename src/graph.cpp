@@ -87,20 +87,17 @@ void TreeNode::getNewLabels(std::unordered_set<long int> &unreachable, std::unor
     }
 }
 
-void TreeNode::updateLabels(std::unordered_map<long int, long int> &new_labels, long int child_label)
+void TreeNode::updateLabels(std::unordered_map<long int, long int> &new_labels)
 {
     for (auto &correspond_to : corresponds_to)
     {
         Edge &label_edge = correspond_to.second;
         Edge &actual_edge = correspond_to.first;
-        if (label_edge.from == child_label)
-        {
+
+        if ( new_labels.find ( actual_edge.from ) != new_labels.end() )
             label_edge.from = new_labels[actual_edge.from];
-        }
-        if (label_edge.to == child_label)
-        {
+        if ( new_labels.find ( actual_edge.to ) != new_labels.end() )
             label_edge.to = new_labels[actual_edge.to];
-        }
     }
 }
 
@@ -132,7 +129,7 @@ void TreeNode::exposeToParent(TreeNode &parent, std::unordered_set<long int> unr
 }
 
 // traverse the Node and all the containing nodes
-void MaintainSCC::traverseNode(int node, std::vector<std::pair<long int, long int>> &new_sccs)
+void MaintainSCC::traverseNode(int node, std::unordered_map<long int, long int> &sccs)
 {
     std::queue<long int> q;
     q.push(node);
@@ -140,7 +137,7 @@ void MaintainSCC::traverseNode(int node, std::vector<std::pair<long int, long in
     {
         long int curr = q.front();
         q.pop();
-        new_sccs.emplace_back(std::make_pair(curr, node));
+        sccs[curr] = node;
         for (auto &child : scc_tree_nodes[curr].contains)
         {
             if (child != curr)
@@ -359,27 +356,33 @@ int MaintainSCC::checkAndRemoveUnreachable(TreeNode &curr_node)
         scc_tree_nodes[unreachable_node].parent = parent.label;
         parent.contains.insert(unreachable_node);
     }
-    // new_labeling
     std::unordered_map<long int, long int> new_labels;
-    // change label of node if only one node present O(1)
-    int curr_node_label = curr_node.label;
     if (curr_node.contains.size() == 1)
     {
         long int new_label = *(curr_node.contains.begin());
         parent.contains.erase(curr_node.label);
+        for(auto &edge_pair: parent.corresponds_to) {
+            Edge &label_edge = edge_pair.second;
+            if(label_edge.from == curr_node.label) {
+                label_edge.from = new_label;
+            }
+            if(label_edge.to == curr_node.label) {
+                label_edge.to = new_label;
+            }
+        }
         curr_node.label = new_label;
-        parent.contains.erase(curr_node.label);
         parent.contains.insert(new_label);
-        scc_tree_nodes[new_label] = curr_node;
     }
-    // fill the new_labels with new mappings that would go in the parent
-    curr_node.getNewLabels(unreachable, new_labels);
+    for(const auto &nd: unreachable) {
+        traverseNode(nd, new_labels);
+    }
     for (auto &new_label : new_labels)
     {
         dPrint("New Label: " + std::to_string(new_label.first) + " -> " + std::to_string(new_label.second));
     }
+    dTreeNode(parent);
     // update the parent with the new labels
-    parent.updateLabels(new_labels, curr_node_label);
+    parent.updateLabels(new_labels);
 
     // exposing internal structure to parent node
     curr_node.exposeToParent(parent, unreachable);
@@ -410,7 +413,7 @@ int MaintainSCC::checkAndDetachUnreachable(TreeNode &root_node)
     {
         edges.emplace_back(correspond_to.first);
     }
-    std::vector<std::pair<long int, long int>> new_sccs;
+    std::unordered_map<long int, long int> new_sccs;
     for (auto &unreachable_node : unreachable)
     {
         roots.push_back(unreachable_node);
@@ -731,7 +734,7 @@ void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
             if (status[i] == STATUS::DONE_NEW)
             {
                 std::vector<Edge> edges;
-                std::vector<std::pair<long int, long int>> node_list;
+                std::unordered_map<long int, long int> node_list;
                 // std::vector<std::pair<long int, int>> transfer_list;
                 world.recv(i, 1, edges);
                 world.recv(i, 2, node_list);
@@ -806,5 +809,3 @@ MaintainSCC::~MaintainSCC()
 {
     endAll();
 }
-
-// give set of unique number to generate from them
