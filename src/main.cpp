@@ -6,7 +6,7 @@
 #include <boost/mpi.hpp>
 
 // Function to get the graph from the input (O(m))
-void getGraph(std::vector<Edge> &edges, long int &n)
+void getGraph(std::vector<SCC::Edge> &edges, long int &n)
 {
   long int m;
   std::cin >> n >> m;
@@ -20,7 +20,7 @@ void getGraph(std::vector<Edge> &edges, long int &n)
 }
 
 // Function to get the list of updates
-void getUpdates(int &updates, std::vector<Edge> &decrement, std::vector<Edge> &increament)
+void getUpdates(int &updates, std::vector<SCC::Edge> &decrement, std::vector<SCC::Edge> &increament)
 {
   std::cin >> updates;
   for (int i = 0; i < updates; i++)
@@ -62,9 +62,9 @@ int main(int argc, char *argv[])
   boost::mpi::communicator world;
 
   long int n;
-  std::vector<Edge> edges;
-  std::vector<Edge> decrement;
-  std::vector<Edge> increament;
+  std::vector<SCC::Edge> edges;
+  std::vector<SCC::Edge> decrement;
+  std::vector<SCC::Edge> increament;
   std::vector<std::pair<long int, long int>> queries;
 
   if (world.rank() == 0)
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
   }
 
   auto start = std::chrono::high_resolution_clock::now();
-  MaintainSCC scc(n, edges);
+  SCC::MaintainSCC scc(n, edges);
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   if (world.rank() == 0)

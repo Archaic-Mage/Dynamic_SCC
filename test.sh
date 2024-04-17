@@ -7,6 +7,7 @@ echo "Running tests at $timestamp" >> logFile
 
 green='\033[0;32m'
 red='\033[0;31m'
+end='\033[0m'
 
 # Run the application
 for input in ./tests/input/*.txt
@@ -26,5 +27,6 @@ do
         echo -e "${red} Test $name: failed"
         echo "Test $name failed" >> logFile
     fi
+    echo -e "${end}"
     echo "--------------------------------" >> logFile
 done

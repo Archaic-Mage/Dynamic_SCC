@@ -3,6 +3,7 @@
 #include "graph.hpp"
 #include <boost/mpi.hpp>
 
+using namespace SCC;
 //printing some information with format strings
 void dInfo(const boost::mpi::communicator& world, std::string message) {
     // return;

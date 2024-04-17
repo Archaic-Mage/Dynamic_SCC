@@ -12,43 +12,120 @@
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/unordered_set.hpp>
 
+namespace SCC {
+
+/**
+ * @brief Edge class to represent an edge in the graph
+ */
 class Edge {
 public:
+    /**
+     * @brief from is the source node of the edge
+     *
+     */
     long int        from;
+    /**
+     * @brief to is the destination node of the edge
+     *
+     */
     long int        to;
-    friend          boost::serialization::access;
 
+    /**
+     * @brief Construct a new Edge object (DEFAULT CONSTRUCTOR)
+     * 
+     */
     Edge() {}
+    /**
+     * @brief Construct a new Edge object
+     * 
+     * @param from specifies the source node
+     * @param to specifies the destination node
+     */
     Edge(int from , int to) : from(from), to(to) {}
 
-
+    /**
+     * @brief Serialize the Edge object
+     * 
+     * Making the boost::serialization friend to access the private members
+     * @tparam Archive the type of the archive
+     * 
+     */
+    friend          boost::serialization::access;
     template < class Archive >
+    /**
+     * @brief This function is used to serialize the Edge object
+     * 
+     * @param ar The archive object
+     * @param version The version of the serialization
+     */
     void serialize(Archive & ar, const unsigned int version) {
         ar & from;
         ar & to;
     }
 
-    bool operator<(const Edge& other) const {
-        if (from == other.from) {
-            return to < other.to;
-        }
-        return from < other.from;
-    }
-
+    /**
+     * @brief Comparator == for the Edge objects 
+     * 
+     * This comparator is essential for the set operations to work
+     * the unordered_set is used to store the edges in the graph
+     * 
+     * @param other Compare the current object with this object
+     * @return true if both the from and to nodes are equal
+     * @return false otherwise
+     */
     bool operator==(const Edge& other) const {
         return from == other.from && to == other.to;
     }
 };
 
+/**
+ * @brief This class is used to represent a single node in the SCC tree. 
+ * This contains information about the original graph nodes
+ * and structure which is used to dynamically maintain the SCCs
+ * 
+ */
 class TreeNode {
 public:
+    /**
+     * @brief this would represent the label of the node in the SCC tree
+     * the label is unique for each node in the SCC tree
+     * 
+     */
     long int                            label;
+    /**
+     * @brief this represents the parent of the current node in the SCC tree
+     *  and is used to traverse the tree upwords.
+     * 
+     */
     long int                            parent;
+    /**
+     * @brief stores the actual edge to labelled edge pair,
+     * nodes forming a scc are condesed to one labelled node, and so are the edges,
+     * the corresponds_to is used to store the actual edges to labelled edges
+     * relationship.
+     * 
+     */
     std::vector<std::pair<Edge, Edge>>  corresponds_to;
+    /**
+     * @brief contains the nodes which are part of the current node in the SCC tree.
+     * They store the label of the child nodes and is used to travese the tree downwards
+     * 
+     */
     std::unordered_set<long int>        contains;
+    /**
+     * @brief stores the depth of the current node in the SCC tree and is
+     * used to find the LCA of two nodes (Lowest Common Ancestor), 
+     * important for update operations.
+     * 
+     */
     long int                            dept;
+    /**
+     * @brief The following function is used to serialize the TreeNode object,
+     * this is essential for the boost::serialization to work. The TreeNodes are 
+     * transferred during update queries.
+     * 
+     */
     friend                              boost::serialization::access;
-
     template < class Archive >
     void serialize(Archive & ar, const unsigned int version) {
         ar & label;
@@ -178,3 +255,5 @@ public:
     MaintainSCC(long int n, std::vector<Edge> &edges);
     ~MaintainSCC();
 };
+
+}
