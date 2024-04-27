@@ -16,6 +16,8 @@ do
     echo "--------------------------------" >> logFile
     echo "$name" >> logFile
     mpirun -np 8 ./build/dynamic_scc < $input >> logFile
+    #/home/mage/Documents/random-graph-generator/tests/sol < $input >output.txt
+    #/home/mage/Documents/random-graph-generator/tests/scc < $input >output.txt
     diff ./tests/output/$name ./output.txt > /dev/null
     if [ $? -eq 0 ]
     then

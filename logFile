@@ -1,4 +1,4 @@
-Running tests at Wed 17 Apr 2024 08:07:04 PM IST
+Running tests at Sat 20 Apr 2024 05:53:51 PM IST
 --------------------------------
 example_c1.txt
 Deleted Edge: 4 1
@@ -12,7 +12,7 @@ Corresponds to: (1->2, 1->27) (3->8, 27->19) (7->8, 27->19)
 Unreachable: 1
 Unreachable: 27
 Unreachable: 19
-Time taken for initialisation: 0.000122521s
+Time taken for initialisation: 0.000153508s
 Edge: 7->8
 Edge: 3->8
 Edge: 1->2
@@ -22,7 +22,7 @@ Parent: 0
 Dept: 0
 Contains: 19 1 27 9 
 Corresponds to: (7->8, 27->19) (3->8, 27->19) (1->2, 1->27) 
-Time taken for updates: 0.000335669s
+Time taken for updates: 0.000261269s
 Test example_c1.txt passed
 --------------------------------
 --------------------------------
@@ -35,8 +35,8 @@ Parent: 11
 Dept: 0
 Contains: 19 27 1 
 Corresponds to: (1->2, 1->27) (7->8, 27->19) (4->1, 19->-1) 
-Time taken for initialisation: 0.000147494s
-Time taken for updates: 0.000161108s
+Time taken for initialisation: 0.000127308s
+Time taken for updates: 0.000216675s
 Test example_c2.txt passed
 --------------------------------
 --------------------------------
@@ -69,14 +69,14 @@ Dept: 0
 Contains: 4 8 6 19 27 1 
 Corresponds to: (1->2, 1->27) (3->8, 27->8) (7->8, 27->8) (4->1, 4->-1) (6->4, 6->4) (8->6, 8->6) 
 Unreachable: 19
-Time taken for initialisation: 0.000114257s
+Time taken for initialisation: 0.000103855s
 TreeNode: 
 Label: 0
 Parent: 0
 Dept: 0
 Contains: 19 9 
 Corresponds to: 
-Time taken for updates: 0.000270617s
+Time taken for updates: 0.000344495s
 Test example_c3.txt passed
 --------------------------------
 --------------------------------
@@ -127,7 +127,7 @@ Contains: 2 7 5 3 19 1
 Corresponds to: (1->2, 1->2) (3->8, 3->19) (7->8, 7->19) (4->1, 19->-1) (7->3, 7->3) (5->7, 5->7) (5->2, 5->2) (2->3, 2->3) 
 Unreachable: 5
 Unreachable: 7
-Time taken for initialisation: 0.000155589s
+Time taken for initialisation: 9.9196e-05s
 Edge: 5->2
 Edge: 5->7
 Edge: 7->3
@@ -138,7 +138,7 @@ Parent: 0
 Dept: 0
 Contains: 5 7 9 
 Corresponds to: (5->2, 5->9) (5->7, 5->7) (7->3, 7->9) (7->8, 7->9) 
-Time taken for updates: 0.000389472s
+Time taken for updates: 0.000329336s
 Test example_c4.txt passed
 --------------------------------
 --------------------------------
@@ -154,7 +154,7 @@ Corresponds to: (3->4, 3->4) (4->5, 4->5)
 Unreachable: 3
 Unreachable: 4
 Unreachable: 5
-Time taken for initialisation: 0.000100143s
+Time taken for initialisation: 8.3646e-05s
 Edge: 4->5
 Edge: 3->4
 TreeNode: 
@@ -163,7 +163,18 @@ Parent: 0
 Dept: 0
 Contains: 3 4 5 1 2 7 6 
 Corresponds to: (1->2, 1->2) (2->3, 2->3) (4->6, 4->6) (4->5, 4->5) (3->4, 3->4) 
-Time taken for updates: 0.000190378s
+Inserting Edge: 6 1
+Strongly connected components are: 
+5 
+7 
+6 2 1 4 3 
+TreeNode: 
+Label: 0
+Parent: 0
+Dept: 0
+Contains: 3 4 5 1 2 7 6 
+Corresponds to: (1->2, 1->2) (2->3, 2->3) (4->6, 4->6) (4->5, 4->5) (3->4, 3->4) (6->1, 6->1) 
+Time taken for updates: 0.000246772s
 Test four_to_one.txt failed
 --------------------------------
 --------------------------------
@@ -232,8 +243,8 @@ Parent: 15
 Dept: 0
 Contains: 23 1 
 Corresponds to: (1->5, 1->23) (5->1, 23->-1) (9->1, 23->-1) 
-Time taken for initialisation: 0.000160056s
-Time taken for updates: 0.000608481s
+Time taken for initialisation: 0.000182211s
+Time taken for updates: 0.000477945s
 Test g1_od.txt passed
 --------------------------------
 --------------------------------
@@ -319,14 +330,14 @@ Dept: 0
 Contains: 47 23 1 
 Corresponds to: (1->4, 1->23) (1->2, 1->23) (3->1, 23->-1) 
 Unreachable: 47
-Time taken for initialisation: 0.00020253s
+Time taken for initialisation: 0.000140152s
 TreeNode: 
 Label: 0
 Parent: 0
 Dept: 0
 Contains: 47 11 
 Corresponds to: 
-Time taken for updates: 0.00059669s
+Time taken for updates: 0.000647572s
 Test g2_od.txt passed
 --------------------------------
 --------------------------------
@@ -352,10 +363,10 @@ Unreachable: 9
 Unreachable: 13
 Unreachable: 94
 New Label: 15 -> 94
-New Label: 18 -> 94
 New Label: 12 -> 94
 New Label: 14 -> 94
 New Label: 17 -> 94
+New Label: 18 -> 94
 New Label: 10 -> 94
 New Label: 11 -> 94
 New Label: 102 -> 94
@@ -478,8 +489,8 @@ Unreachable: 38
 Unreachable: 86
 New Label: 86 -> 86
 New Label: 11 -> 38
-New Label: 18 -> 38
 New Label: 14 -> 38
+New Label: 18 -> 38
 New Label: 10 -> 38
 New Label: 15 -> 38
 New Label: 102 -> 38
@@ -519,7 +530,7 @@ Corresponds to: (1->4, 1->38) (6->1, 38->-1) (2->5, 2->38) (2->15, 2->38) (2->13
 Unreachable: 30
 Unreachable: 2
 Unreachable: 86
-Time taken for initialisation: 0.000306239s
+Time taken for initialisation: 0.000213018s
 Edge: 2->20
 Edge: 2->19
 Edge: 2->9
@@ -532,7 +543,7 @@ Parent: 0
 Dept: 0
 Contains: 2 30 16 86 21 
 Corresponds to: (16->13, 16->21) (16->18, 16->21) (16->2, 16->2) (2->20, 2->21) (2->19, 2->21) (2->9, 2->21) (2->13, 2->21) (2->15, 2->21) (2->5, 2->21) 
-Time taken for updates: 0.00145698s
+Time taken for updates: 0.00175329s
 Test g3_od.txt passed
 --------------------------------
 --------------------------------
@@ -689,14 +700,14 @@ TreeNode:
 Label: 38
 Parent: 30
 Dept: 2
-Contains: 15 7 46 12 94 3 
+Contains: 15 7 46 94 3 12 
 Corresponds to: (3->13, 3->46) (3->7, 3->46) (3->18, 3->46) (4->12, 46->12) (12->3, 12->-3) (15->3, 46->-3) (16->12, 46->12) (16->3, 46->-3) 
 Rank 1: Deleting Cache
 TreeNode: 
 Label: 38
 Parent: 30
 Dept: 2
-Contains: 15 7 46 12 94 3 
+Contains: 15 7 46 94 3 12 
 Corresponds to: (3->13, 3->46) (3->7, 3->7) (3->18, 3->46) (4->12, 46->12) (12->3, 12->-3) (15->3, 15->-3) (16->12, 46->12) (16->3, 46->-3) (18->7, 46->7) (19->7, 46->7) (20->7, 46->7) (15->16, 15->46) (15->17, 15->46) 
 Unreachable: 94
 Unreachable: 7
@@ -708,41 +719,41 @@ TreeNode:
 Label: 30
 Parent: 22
 Dept: 1
-Contains: 7 94 38 5 15 2 
+Contains: 7 94 38 15 2 5 
 Corresponds to: (2->9, 2->38) (3->5, 38->5) (8->5, 38->5) (9->2, 38->-2) (10->5, 38->5) (20->5, 38->5) 
 Rank 1: Deleting Cache
 TreeNode: 
 Label: 30
 Parent: 22
 Dept: 1
-Contains: 7 94 38 5 15 2 
+Contains: 7 94 38 15 2 5 
 Corresponds to: (2->9, 2->38) (3->5, 38->5) (8->5, 38->5) (9->2, 38->-2) (10->5, 38->5) (20->5, 38->5) (15->17, 15->38) (15->16, 15->38) (20->7, 38->7) (19->7, 38->7) (18->7, 38->7) (15->3, 15->38) (3->7, 38->7) 
-Unreachable: 15
 Unreachable: 5
+Unreachable: 15
 Unreachable: 94
 Unreachable: 7
 New Label: 7 -> 7
 New Label: 94 -> 94
-New Label: 5 -> 5
 New Label: 15 -> 15
+New Label: 5 -> 5
 TreeNode: 
 Label: 22
 Parent: 22
 Dept: 0
-Contains: 7 94 5 15 30 1 
+Contains: 7 94 15 5 30 1 
 Corresponds to: (1->20, 1->30) (18->1, 30->-1) 
 Rank 1: Deleting Cache
 TreeNode: 
 Label: 22
 Parent: 22
 Dept: 0
-Contains: 7 94 5 15 30 1 
+Contains: 7 94 15 5 30 1 
 Corresponds to: (1->20, 1->30) (18->1, 30->-1) (3->7, 30->7) (15->3, 15->30) (18->7, 30->7) (19->7, 30->7) (20->7, 30->7) (15->16, 15->30) (15->17, 15->30) (20->5, 30->5) (10->5, 30->5) (8->5, 30->5) (3->5, 30->5) 
-Unreachable: 15
 Unreachable: 5
+Unreachable: 15
 Unreachable: 94
 Unreachable: 7
-Time taken for initialisation: 0.000329199s
+Time taken for initialisation: 0.000213921s
 Edge: 3->5
 Edge: 8->5
 Edge: 10->5
@@ -760,13 +771,13 @@ Parent: 0
 Dept: 0
 Contains: 7 94 5 15 6 21 
 Corresponds to: (6->7, 6->7) (6->2, 6->21) (3->5, 21->5) (8->5, 21->5) (10->5, 21->5) (20->5, 21->5) (15->17, 15->21) (15->16, 15->21) (20->7, 21->7) (19->7, 21->7) (18->7, 21->7) (15->3, 15->21) (3->7, 21->7) 
-Time taken for updates: 0.0019105s
+Time taken for updates: 0.00190086s
 Test g4_od.txt passed
 --------------------------------
 --------------------------------
 one_scc_nu.txt
-Time taken for initialisation: 0.000131838s
-Time taken for updates: 0.000152644s
+Time taken for initialisation: 0.000121808s
+Time taken for updates: 0.000136445s
 Test one_scc_nu.txt passed
 --------------------------------
 --------------------------------
@@ -781,15 +792,6 @@ Parent: 14
 Dept: 1
 Contains: 6 5 4 
 Corresponds to: (5->6, 5->6) (6->4, 6->-4) 
-Time taken for initialisation: 0.000132228s
-Edge: 5->6
-Edge: 6->4
-TreeNode: 
-Label: 0
-Parent: 0
-Dept: 0
-Contains: 4 5 6 7 
-Corresponds to: (5->6, 5->6) (6->4, 6->4) 
 Unreachable: 5
 Unreachable: 6
 New Label: 6 -> 6
@@ -810,7 +812,16 @@ Corresponds to: (1->2, 1->2) (2->3, 2->3) (3->1, 3->-1) (6->4, 6->4) (5->6, 5->6
 Unreachable: 5
 Unreachable: 6
 Unreachable: 4
-Time taken for updates: 0.000322107s
+Time taken for initialisation: 9.8725e-05s
+Edge: 5->6
+Edge: 6->4
+TreeNode: 
+Label: 0
+Parent: 0
+Dept: 0
+Contains: 4 5 6 7 
+Corresponds to: (5->6, 5->6) (6->4, 6->4) 
+Time taken for updates: 0.000379911s
 Test one_scc_od.txt passed
 --------------------------------
 --------------------------------
@@ -823,16 +834,17 @@ TreeNode:
 Label: 14
 Parent: 14
 Dept: 0
-Contains: 1 2 30 
-Corresponds to: (2->6, 2->30) (6->1, 30->-1) (3->1, 30->-1) (2->3, 2->30) (1->2, 1->2) 
+Contains: 30 2 0 1 
+Corresponds to: (2->6, 2->30) (6->1, 30->0) (3->1, 30->0) (2->3, 2->30) (1->2, 1->2) 
+Rank 7: Inserting Cache
 TreeNode: 
 Label: 30
 Parent: 14
 Dept: 1
-Contains: 
-Corresponds to: (6->3, 22->3) (4->3, 22->3) (3->4, 3->22) 
-Time taken for initialisation: 0.000129494s
-Time taken for updates: 0.000282248s
+Contains: 22 3 
+Corresponds to: (6->3, 22->-3) (4->3, 22->-3) (3->4, 3->22) 
+Time taken for initialisation: 0.000110938s
+Time taken for updates: 0.000289882s
 Test one_scc_oi.txt passed
 --------------------------------
 --------------------------------
@@ -872,7 +884,7 @@ Unreachable: 22
 Unreachable: 4
 Unreachable: 5
 Unreachable: 6
-Time taken for initialisation: 0.000105201s
+Time taken for initialisation: 0.000110787s
 Edge: 4->5
 Edge: 5->6
 Edge: 6->1
@@ -884,7 +896,20 @@ Parent: 0
 Dept: 0
 Contains: 2 3 4 5 6 22 7 
 Corresponds to: (4->5, 4->5) (5->6, 5->6) (6->1, 6->7) (3->4, 3->4) (1->2, 7->2) 
-Time taken for updates: 0.000325122s
+Inserting Edge: 6 3
+Inserting Edge: 5 2
+Strongly connected components are: 
+2 
+6 5 4 3 
+22 
+7 
+TreeNode: 
+Label: 0
+Parent: 0
+Dept: 0
+Contains: 2 3 4 5 6 22 7 
+Corresponds to: (4->5, 4->5) (5->6, 5->6) (6->1, 6->7) (3->4, 3->4) (1->2, 7->2) (6->3, 6->3) (5->2, 5->2) 
+Time taken for updates: 0.000477964s
 Test one_scc_rr.txt failed
 --------------------------------
 --------------------------------
@@ -897,7 +922,12 @@ Parent: 14
 Dept: 0
 Contains: 6 4 3 2 1 
 Corresponds to: (1->2, 1->2) (2->3, 2->3) (3->4, 3->4) (4->6, 4->6) 
-Time taken for initialisation: 0.000102528s
+Unreachable: 1
+Unreachable: 2
+Unreachable: 3
+Unreachable: 4
+Unreachable: 6
+Time taken for initialisation: 0.000102401s
 Edge: 4->6
 Edge: 3->4
 Edge: 2->3
@@ -908,18 +938,26 @@ Parent: 0
 Dept: 0
 Contains: 1 2 3 4 6 5 7 
 Corresponds to: (4->5, 4->5) (4->6, 4->6) (3->4, 3->4) (2->3, 2->3) (1->2, 1->2) 
-Unreachable: 1
-Unreachable: 2
-Unreachable: 3
-Unreachable: 4
-Unreachable: 6
-Time taken for updates: 0.000232081s
+Inserting Edge: 5 3
+Strongly connected components are: 
+1 
+2 
+6 
+5 4 3 
+7 
+TreeNode: 
+Label: 0
+Parent: 0
+Dept: 0
+Contains: 1 2 3 4 6 5 7 
+Corresponds to: (4->5, 4->5) (4->6, 4->6) (3->4, 3->4) (2->3, 2->3) (1->2, 1->2) (5->3, 5->3) 
+Time taken for updates: 0.000288119s
 Test one_to_four.txt failed
 --------------------------------
 --------------------------------
 two_scc_nu.txt
-Time taken for initialisation: 0.000139872s
-Time taken for updates: 0.000141284s
+Time taken for initialisation: 9.5769e-05s
+Time taken for updates: 0.000107421s
 Test two_scc_nu.txt passed
 --------------------------------
 --------------------------------
@@ -934,7 +972,7 @@ Contains: 6 5 4
 Corresponds to: (5->6, 5->6) (6->4, 6->-4) 
 Unreachable: 5
 Unreachable: 6
-Time taken for initialisation: 0.000139421s
+Time taken for initialisation: 0.000115897s
 Edge: 6->4
 Edge: 5->6
 TreeNode: 
@@ -943,17 +981,36 @@ Parent: 0
 Dept: 0
 Contains: 5 6 15 7 
 Corresponds to: (6->4, 6->7) (5->6, 5->6) 
-Time taken for updates: 0.000226842s
+Time taken for updates: 0.00018672s
 Test two_scc_od.txt passed
 --------------------------------
 --------------------------------
 two_scc_oi.txt
-Time taken for initialisation: 0.00013877s
-Time taken for updates: 0.000135474s
+Time taken for initialisation: 9.3696e-05s
+Inserting Edge: 2 6
+Inserting Edge: 4 3
+Inserting Edge: 6 3
+Strongly connected components are: 
+7 15 
+TreeNode: 
+Label: 0
+Parent: 0
+Dept: 0
+Contains: 15 7 
+Corresponds to: (3->4, 15->7) (1->6, 15->7) (2->6, 15->7) (4->3, 7->15) (6->3, 7->15) 
+Time taken for updates: 0.000166432s
 Test two_scc_oi.txt failed
 --------------------------------
 --------------------------------
 two_scc_rr.txt
+Deleted Edge: 6 4
+Rank 1: Deleting Cache
+TreeNode: 
+Label: 8
+Parent: 8
+Dept: 0
+Contains: 6 5 4 
+Corresponds to: (4->5, 4->5) (5->6, 5->6) 
 Deleted Edge: 3 1
 Deleted Edge: 2 3
 Rank 7: Deleting Cache
@@ -966,18 +1023,10 @@ Corresponds to: (1->2, 1->2)
 Unreachable: 1
 Unreachable: 2
 Unreachable: 3
-Deleted Edge: 6 4
-Rank 1: Deleting Cache
-TreeNode: 
-Label: 8
-Parent: 8
-Dept: 0
-Contains: 6 5 4 
-Corresponds to: (4->5, 4->5) (5->6, 5->6) 
 Unreachable: 4
 Unreachable: 5
 Unreachable: 6
-Time taken for initialisation: 0.000106654s
+Time taken for initialisation: 0.000119293s
 Edge: 5->6
 Edge: 4->5
 TreeNode: 
@@ -993,6 +1042,20 @@ Parent: 0
 Dept: 0
 Contains: 1 3 4 5 6 2 15 7 
 Corresponds to: (3->4, 3->4) (1->6, 1->6) (5->6, 5->6) (4->5, 4->5) (1->2, 1->2) 
-Time taken for updates: 0.000223737s
+Inserting Edge: 6 3
+Inserting Edge: 5 2
+Strongly connected components are: 
+1 
+6 5 4 3 
+2 
+15 
+7 
+TreeNode: 
+Label: 0
+Parent: 0
+Dept: 0
+Contains: 1 3 4 5 6 2 15 7 
+Corresponds to: (3->4, 3->4) (1->6, 1->6) (5->6, 5->6) (4->5, 4->5) (1->2, 1->2) (6->3, 6->3) (5->2, 5->2) 
+Time taken for updates: 0.000311182s
 Test two_scc_rr.txt failed
 --------------------------------

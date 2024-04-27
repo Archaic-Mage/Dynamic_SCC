@@ -79,6 +79,15 @@ public:
 };
 
 /**
+ * @brief This function is used to find the strongly connected components in the graph
+ * 
+ * @param edges are provided as input to the function (graph edges)
+ * @param sccs is unordered_map which stores the nodes and their corresponding sccs to which they belong.
+ * This is initially filled by the caller function to contain all the nodes in the graph.
+ */
+void findScc(const std::vector< Edge > &edges, std::unordered_map< long int, long int > &sccs);
+
+/**
  * @brief This class is used to represent a single node in the SCC tree. 
  * This contains information about the original graph nodes
  * and structure which is used to dynamically maintain the SCCs
@@ -135,9 +144,21 @@ public:
         ar & dept;
     }
 
+    /**
+     * @brief the function is used to fill the corresponds_to edge pairs for the current node.
+     * The sccs is used to find the labelling of the nodes in the graph and create the 
+     * corresponding edges in the SCC tree.
+     * 
+     * @param edges are the actual edge present in the graph
+     * @param sccs is a unordered_map which stores the nodes and their corresponding sccs to which they belong.
+     */
     void condenseFill(std::vector<Edge>& edges, std::unordered_map<long int, long int>& sccs);
+    /**
+     * @brief the function is used to find the unreachable nodes in the current node.
+     * 
+     * @param unreachable is a set which stores the unreachable nodes after its execution.
+     */
     void checkUnreachable(std::unordered_set<long int>& unreachable);
-    void getNewLabels(std::unordered_set<long int>& unreachable, std::unordered_map<long int, long int>& new_labels);
     void updateLabels(std::unordered_map<long int, long int>& new_labels);
     void exposeToParent(TreeNode& parent, std::unordered_set<long int> unreachable);
     void removeEdge(const Edge& edge);
@@ -242,6 +263,7 @@ class MaintainSCC {
     void deleteEdge(Edge edge);
     bool clearDeleteCache(TreeNode &node);
     void deleteEdgeFromMaster(Edge edge);
+    void insertEdgesInMaster(std::vector<Edge> &edges);
     void insertEdge(Edge edge);
     void clearInsertCache(TreeNode &node);
     void processMessage();
