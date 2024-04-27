@@ -1,0 +1,51 @@
+%To recognise @ as a letter
+\makeatletter
+
+\def\firstauthor#1{\gdef\@firstauthor{#1}}
+\def\secondauthor#1{\gdef\@secondauthor{#1}}
+\def\firstID#1{\gdef\@firstID{#1}}
+\def\secondID#1{\gdef\@secondID{#1}}
+\def\firstemail#1{\gdef\@firstemail{#1}}
+\def\secondemail#1{\gdef\@secondemail{#1}}
+\def\supervisor#1{\gdef\@supervisor{#1}}
+\def\submitdate#1{\gdef\@submitdate{#1}}
+
+
+\def\maketitle{
+    \begin{titlepage}{
+    \begin{center}{
+    \includegraphics[width=0.5\columnwidth]{Figures/iitm-logo.png}
+    \vskip 0.5in \par
+    \LARGE \textbf{\@title}
+    \vskip 0.5in \par
+    \large{
+        \textit{A Report submitted in partial fulfillment for the Degree of}
+        \vskip 0.13in
+        \textbf{Bachelor of Technology}\\
+        \textit{in}\\
+        \textbf{Computer Science and Engineering}
+        \vskip 0.10in
+        \textit{by}
+        % \vskip 0.10in 
+    }
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+%Authors
+\normalsize{
+    \textbf{\@firstauthor}\footnote[1]{Student ID: \@firstID, Email: \texttt{\url{\@firstemail}}}\ \ \\ \ \\
+    % \textbf{\@secondauthor}\footnote[2]{Student ID: \@secondID, Email: \texttt{\url{\@secondemail}}}\ \ \\ \ \\
+    Supervised by \@supervisor
+    }
+\vskip 0.2in
+
+%I have every faith you can figure this one out
+\large{Submitted \@submitdate}
+}
+\end{center}
+}
+\end{titlepage}
+}
+
+%Refresh footnotes to be numbers
+\renewcommand{\thefootnote}{\arabic{footnote}}
+\makeatother %Refresh @ 

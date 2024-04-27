@@ -1,0 +1,70 @@
+\section{Theoretical Methodology}\label{Sec: Theoretical Methodology}
+
+In this part, we elaborate on and enhance the algorithm proposed in \cite{scc_tree_reference}
+for maintaining strongly connected components (SCCs) under a sequence of updates. 
+The algorithm is designed to accommodate n vertices and m edges as input, proficiently manages the following operations:
+\begin{itemize}
+ \item  \textsc{Query}(u, v): Verifies whether both u and v belong to the same SCC.
+ \item  \textsc{Delete}(u, v): Removes the edge from u to v.
+\item  \textsc{Add}(u, v): Introduces the edge from u to v.
+\end{itemize}
+
+This algorithm achieves its objectives through the creation and continuous maintenance of a specialized data structure known as the SCC Tree, 
+which is further explained in the subsequent section. 
+Additionally, it employs an SCC mapping array to facilitate queries in constant time \textit{O(1)}.
+
+The algorithm initiates with an initialization stage, wherein it constructs the proposed SCC tree 
+and populates the SCC mapping array based on the identified strongly connected components within the graph. 
+Subsequently, the process of constructing and maintaining these pivotal data structures under the delete and add updates is elaborated in the following sections, accompanied by their respective pseudo codes.
+
+\subsection{Data Structures}\label{Subsec: Data Structures Theoretical}
+
+In this section, we delve into a comprehensive exploration of the specialized data structures crucial to the functionality 
+and efficiency of the algorithm. Through this detailed examination, we aim to provide clarity 
+and insight into the design principles, operational mechanisms, and computational complexities of these structures.
+
+\subsubsection{SCC Tree}\label{Subsubsec: SCC Tree}
+The SCC tree serves as a vital component in maintaining the internal connectivity of vertices within the strongly connected components of graph G. 
+For each SCC identified in the graph, a corresponding SCC tree is constructed.
+
+The node in the SCC tree corresponding to the label $R$ encapsulates a tuple that can be represented as $\text{\textit{STN}}(R) = \lf( V, E \rt)$, 
+where $V$ represents set of vertices and $E$ represents set of edges connecting them.
+This encapsulation enables the SCC tree to maintain the connectivity of the vertices that are a part of the SCC labeled $R$,
+also facilitating efficient traversal and update operations.
+
+Each vertex $v \in V$ in the \ac{stn} of $R$ is a label uniquely associated with an SCC tree. 
+This tree is a subtree of the SCC tree represented by the label $R$.
+The SCC tree for a graph containing one vertex $v$ has only a single \ac{stn} represented as $\text{\textit{STN}}(v) = (\{v\}, \emptyset)$.
+
+\input{content/graph/scc_tree_with_node.tex}
+
+\subsubsection{SCC Mapping Array}\label{Subsubsec: SCC Mapping Array}
+In graph G, each vertex $v$ is inherently associated with a strongly connected component (SCC), denoted by its corresponding SCC label. 
+The SCC mapping array effectively captures this relationship between vertices and their respective SCC labels.
+
+Suppose vertex $v$ in graph $G$ belongs to the strongly connected component labeled as $R$.
+ In that case, we express this association using the SCC mapping array notation as $\text{\textit{SM}}_{G}(v)=R$. 
+ This signifies that vertex $v$ is mapped to the SCC labeled as $R$ within the context of the graph $G$.
+
+
+\subsection{Definitions}\label{Subsec: Definitions Theoretical}
+In this section, we establish key definitions that form the foundation of the algorithms presented subsequently. 
+These definitions are instrumental in understanding the intricacies of the algorithms and their associated data structures.
+
+\subsubsection{\textit{FIND\_SCC}(G)}
+\subsubsection{\textit{CONDENSE}(G)}
+\subsubsection{\textit{SPLIT}(G)}
+\subsubsection{\textit{MERGE}(G)}
+\subsubsection{\textit{UNREACHABLE}(G)}
+
+
+% subsection of construction of scc tree
+\input{content/graph/scc_tree_construction.tex}
+
+\subsection{Decremental Maintaince of SCC Tree}\label{Subsec: Decremental Maintaince of SCC Tree}
+
+\input{content/graph/dec_root_node.tex}
+\input{content/graph/dec_internal_node.tex}
+
+\subsection{Incremental Maintaince of SCC Tree}\label{Subsec: Incremental Maintaince of SCC Tree}
+\blindtext

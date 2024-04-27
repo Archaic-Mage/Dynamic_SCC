@@ -1,0 +1,113 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{Preambles/preamble}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                              % 
+%             Template produced by Fergus Babb of the University of Nottingham, 2024           %
+%                                                                                              %  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Dynamic Parallel Maintaince of Strongly Connected Components in MPI}
+%This isn't supposed to be for level of authorship, alphabetical is fine
+\firstauthor{Soham Tripathy}
+\firstID{CS20B073}
+\firstemail{cs20b073@smail.iitm.ac.in}
+\secondauthor{Name 2}
+\secondID{Number ID 2}
+\secondemail{ppyzzz@nottingham.ac.uk}
+\supervisor{Professor. Rupesh Nasre}
+\submitdate{\today}
+\maketitle
+
+\addtocounter{page}{-1}
+\pagenumbering{roman}
+\thispagestyle{empty}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\null\vspace{2in}
+\begin{abstract}
+\input{content/abstract.tex}
+\end{abstract}
+\vspace{\fill}
+\thispagestyle{empty}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+\newpage
+\doublespacing
+\tableofcontents
+\singlespacing
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%Sections before Main Content of report
+
+\newpage
+\section*{Conventions and Notation}\label{Conventions}
+\addcontentsline{toc}{subsection}{\textit{Conventions and Notation}}
+\begin{enumerate}[i.]
+\item A convention you use here, e.g. Unless otherwise stated we use units such that $c=1$.
+\end{enumerate}
+
+\vspace{2em}
+
+\addcontentsline{toc}{subsection}{\textit{Acronyms}}
+\printacronyms
+\newacronym{mpi}{MPI}{Message Passing Interface: A standard for parallel computing}
+\newacronym{scc}{SCC}{Strongly Connected Components}
+\newacronym{dag}{DAG}{Directed Acyclic Graph}
+\newacronym{stn}{STN}{SCC Tree Node}
+\vspace{2em}
+
+\listoffigures
+\addcontentsline{toc}{subsection}{\textit{List of Figures}}
+\vspace{2em}
+
+\listoftables
+\addcontentsline{toc}{subsection}{\textit{List of Tables}}
+\vspace{2em}
+\newpage
+\null\vspace{2in}
+\section*{Acknowledgements}\label{Acknowledgements}
+\addcontentsline{toc}{subsection}{\textit{Acknowledgements}}
+\vspace{2em}
+\input{content/acknowledgements.tex}
+\vspace{2em}
+
+\hfill Soham Tripathy
+\vspace{\fill}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%Main Content sections start
+
+\newpage
+\pagenumbering{arabic}
+\section*{Main Content}%So pdf viewers dont have everything as a subsection of preamble
+\addcontentsline{toc}{part}{Main Content}
+
+
+\input{content/introduction.tex}
+\input{content/background.tex}
+\input{content/theoretical_method.tex}
+\input{content/practical_implementation.tex}
+\input{content/results.tex}
+\input{content/conclusion.tex}
+\input{content/appendices.tex}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\input{content/references.tex}
+
+
+
+
+\end{document}
+
+
+
+%Fin :) - Happy Typesetting!

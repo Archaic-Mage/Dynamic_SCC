@@ -2,3 +2,22 @@
 /build
 
 /tests/input/i3.txt
+
+# Ignore build files for latex
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.ist
+*.lof
+*.acn
+*.acr
+*.fdb_latexmk
+*.fls
+*.glo
+*.glsdefs
+*.glg
+*.lot
+*.synctex.gz
+*.toc

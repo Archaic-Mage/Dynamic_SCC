@@ -1,0 +1,66 @@
+\begin{comment}
+Getting Started:
+
+Add your names, student ID numbers and emails (full ppyxxx@nottingham.ac.uk) to the title sections of Main Content.tex
+Remove instances of \blindtext.
+You are ready to start writing!
+Keep this how to so you can refer back later.
+
+Referencing:
+    Equations
+        Use the standard \eqref{Label Here} for (Section X.equation x)
+    Tables:
+        Use \tableref{\ref{Label Here}} for Table. x
+    Figures:
+        Use \figref{\ref{Label Here}} for Fig. X.
+        Add all figures, whether that be svg, png, pdf, to the Figures Folder
+    Other Sections:
+        Use \secref{\ref{Label Here}} for S.X.x (but with the squiggly S)
+
+For equations use \label at the start of the environment if it is for the whole section, or before \\ if you are referring to a single line.
+
+For tables use \label after \caption. Same for Figures.
+For sections use \label immediately succeeding {} of the section declaration.
+
+All figures and Tables will be automatically catalogued into the List of Figues/Tables
+
+
+Acronyms:
+To declare a new acronym, you can either do it next to \printacronyms (Reccomended as they will all be in one place), or in the main body of work. 
+To define a new acronym use 
+\newacronym{label}{ABC}{Definition}
+thereafter, to use the acronym in the body of text use \ac{label} to get ABC.
+Use \acrfull{label} to get ABC (Definition) and \acrlong{label} for just Definition.
+
+
+
+Citations:
+Use References.bib to store your citations in usual bib form. Cite as usual with \cite. The bibliography style used is usrt.
+
+
+
+Section Titles:
+Do not use underlines in section titles, as errors this could cause have been suppressed.
+If you need to use math mode in a section title use the form
+\section{Text Here \tx{$maths here$}{maths in text form}}.
+\tx is short for \texorpdfstring. The reason is more for pdf viewers that only recognise unicode for their inbuilt navigation bars.
+
+
+
+Shorthand Commands used:
+See Preambles/commands for further info, but in summary:
+\pfrac{A}{B} gives a partial fraction of A wrt B
+\diffrac{A}{B} gives a derivative of A wrt B
+\d gives a text d for differential operator
+\cal is the same as \mathcal
+\mbf is the same as \mathbf
+\Re gives boldface R (for the Reals) 
+\lf and \rt are left and right respectively
+\mathsmall is short for \scriptscriptstyle (if you want capitalised subtext its best to decrease size of the font used
+
+Of course feel free to add more commands to suit your needs.
+
+
+Have fun and the best of luck for your masters thesis!
+
+\end{comment}
