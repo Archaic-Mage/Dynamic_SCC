@@ -1,5 +1,4 @@
 \section{Theoretical Methodology}\label{Sec: Theoretical Methodology}
-
 In this part, we elaborate on and enhance the algorithm proposed in \cite{scc_tree_reference}
 for maintaining strongly connected components (SCCs) under a sequence of updates. 
 The algorithm is designed to accommodate n vertices and m edges as input, proficiently manages the following operations:
@@ -24,17 +23,18 @@ and efficiency of the algorithm. Through this detailed examination, we aim to pr
 and insight into the design principles, operational mechanisms, and computational complexities of these structures.
 
 \subsubsection{SCC Tree}\label{Subsubsec: SCC Tree}
-The SCC tree serves as a vital component in maintaining the internal connectivity of vertices within the strongly connected components of graph G. 
+The \hyperref[scc]{SCC} tree serves as a vital component in maintaining the internal connectivity of vertices within the strongly connected components of graph G. 
 For each SCC identified in the graph, a corresponding SCC tree is constructed.
 
-The node in the SCC tree corresponding to the label $R$ encapsulates a tuple that can be represented as $\text{\textit{STN}}(R) = \lf( V, E \rt)$, 
-where $V$ represents set of vertices and $E$ represents set of edges connecting them.
+The node in the SCC tree corresponding to the label $R$ encapsulates a tuple that can be represented as $\text{\textsc{STN}}(R) = \lf( V, E \rt)$, 
+where $V$ represents set of vertices and $E$ represents set of edges connecting them. We can thus informally infer that \textsc{STN}(R) holds some graph-like structure $G$.
+We will refer to the vertex set of the SCC tree node labeled $R$ as $\text{\textsc{STN}}(R).V$ and the edge set as $\text{\textsc{STN}}(R).E$.
 This encapsulation enables the SCC tree to maintain the connectivity of the vertices that are a part of the SCC labeled $R$,
 also facilitating efficient traversal and update operations.
 
-Each vertex $v \in V$ in the \ac{stn} of $R$ is a label uniquely associated with an SCC tree. 
+Each vertex $v \in V$ in the \hyperref[stn]{STN} of $R$ is a label uniquely associated with an SCC tree. 
 This tree is a subtree of the SCC tree represented by the label $R$.
-The SCC tree for a graph containing one vertex $v$ has only a single \ac{stn} represented as $\text{\textit{STN}}(v) = (\{v\}, \emptyset)$.
+The SCC tree for a graph containing one vertex $v$ has only a single \hyperref[stn]{STN} represented as $\text{\textsc{STN}}(v) = (\{v\}, \emptyset)$.
 
 \input{content/graph/scc_tree_with_node.tex}
 
@@ -43,7 +43,7 @@ In graph G, each vertex $v$ is inherently associated with a strongly connected c
 The SCC mapping array effectively captures this relationship between vertices and their respective SCC labels.
 
 Suppose vertex $v$ in graph $G$ belongs to the strongly connected component labeled as $R$.
- In that case, we express this association using the SCC mapping array notation as $\text{\textit{SM}}_{G}(v)=R$. 
+ In that case, we express this association using the SCC mapping array notation as $\text{\textsc{SM}}_{G}(v)=R$. 
  This signifies that vertex $v$ is mapped to the SCC labeled as $R$ within the context of the graph $G$.
 
 
@@ -51,11 +51,117 @@ Suppose vertex $v$ in graph $G$ belongs to the strongly connected component labe
 In this section, we establish key definitions that form the foundation of the algorithms presented subsequently. 
 These definitions are instrumental in understanding the intricacies of the algorithms and their associated data structures.
 
-\subsubsection{\textit{FIND\_SCC}(G)}
-\subsubsection{\textit{CONDENSE}(G)}
-\subsubsection{\textit{SPLIT}(G)}
-\subsubsection{\textit{MERGE}(G)}
-\subsubsection{\textit{UNREACHABLE}(G)}
+\subsubsection{\textsc{FindScc}(G)}\label{Subsubsec: FindScc}
+For a given graph $G$, let $V(G)$ represent the set of vertices of graph $G$.
+We consider $k$ set of vertices as $U_i \forall i \in [1,k]$ such that it satisfies that following conditions:
+\begin{itemize}
+    \item $\bigcup\limits_{i=1}^{i=k}U_i = V(G)$
+    \item $U_i \cap U_j = \emptyset$  $\forall i, j \in [1,k] | i \neq j$
+    \item For each $U_i$, we say $\forall v, u \in U_i | v \neq u$, $\text{\textsc{Query}}(u, v) = true$.
+    \item For any $U_i$ and $U_j$ such that $i \neq j$, $\forall v \in U_i$ and $\forall u \in U_j$, $\text{\textsc{Query}}(u, v) = false$.
+\end{itemize}
+We define the function \textsc{FindScc}(G) as the process of identifying the set of vertices $U_i$ that satisfies the above conditions.
+The function \textsc{FindScc}(G) is instrumental in identifying the strongly connected components within the graph $G$.
+We can do this by using any standard linear time algorithm, some of which are mentioned in \cite{find_scc_algorithm}, \cite{Kosaraju}, and \cite{DBLP:journals/corr/abs-2201-07197}.
+
+\subsubsection{\textsc{Condense}(G)}\label{Subsubsec: Condense}
+
+We define \textsc{Condense}(G) as condensing the graph $G$ into a new graph $G'$, where each vertex in $G'$ represents a strongly connected component in $G$,
+$ie.$ $V(G') = \{\text{\textsc{SM}}_G(v) | v \in V(G)\}$.
+The edges in $G'$ are such that if there is an edge from $u$ to $v$ in $G$, and $u$ and $v$ belong to different strongly connected components in $G$,
+then there is an edge from the strongly connected component containing $u$ to the strongly connected component containing $v$ in $G'$. 
+Therefore, a edge $(u, v) \in E(G) | \text{\textsc{Query}}(u, v) = false$ correponds to an edge $(\text{\textsc{SM}}_{G}(u), \text{\textsc{SM}}_{G}(v)) \in E(G')$.
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \KwData{G}
+    \KwResult{G'}
+    U = \text{\textsc{FindScc}}(G)\;
+    \For {$U_i \in U$} {
+        L = new label\;
+        \For {$v \in U_i$} {
+            $\text{\textsc{SM}}_G(v)$ = L\;
+        }
+        $V(G') = V(G')\cup L$
+    }
+    \For {$(u, v) \in E(G)$} {
+        \If {$\text{\textsc{Query}}(u, v) = false$} {
+            $E(G') = E(G') \cup (\text{\textsc{SM}}_G(u), \text{\textsc{SM}}_G(v))$
+        }
+    }
+    \caption{\textsc{Condense}(G)}
+\end{algorithm}
+
+\subsubsection{\textsc{Split}(G,d)}\label{Subsubsec: Split}
+Consider any graph G with a set of vertices $V(G)$ and a set of edges $E(G)$ such that $|\text{\textsc{FindScc}}(G)| = 1$.
+Let $\exists d \in V(G)$ that can be split into two vertices $d_{in}$ and $d_{out}$ producing a new graph $G'$ 
+such that any edge incident on $d$ is now incident on $d_{in}$ and any edge originating from $d$ is now originating from $d_{out}$.
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \KwData{G, d}
+    \KwResult{G'}
+    $V(G') = (V(G) \setminus \{d\}) \cup \{d_{in}, d_{out}\}$\;
+    \For {$(u, v) \in E(G)$} {
+        \If {$v = d$} {
+            $E(G') = E(G') \cup (u, d_{in})$
+        }
+        \textbf{else} \If {$u = d$} {
+            $E(G') = E(G') \cup (d_{out}, v)$
+        }
+        \Else {
+            $E(G') = E(G') \cup (u, v)$
+        }
+    }
+    \caption{\textsc{Split}(G,d)}
+\end{algorithm}
+
+\subsubsection{\textsc{Merge}(G, s, t, d)}\label{Subsubsec: Merge}
+Let there be a graph $G$ such that it has a source vertex $s$ and a sink vertex $t$.
+We define \textsc{Merge}(G,s,t, d) as merging the vertices $s$ and $t$ into vertex $d$ in the graph $G$ to produce a new graph $G'$.
+This operation is the inverse of the \textsc{Split}(G, d) operation.
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \KwData{G,s,t,d}
+    \KwResult{G'}
+    $V(G') = V(G) \setminus \{t, s\} \cup \{d\}$\;
+    \For {$(u, v) \in E(G)$} {
+        \If {$v = t$} {
+            $E(G') = E(G') \cup (u, d)$
+        }
+        \textbf{else} \If {$u = s$} {
+            $E(G') = E(G') \cup (d, v)$
+        }
+        \Else {
+            $E(G') = E(G') \cup (u, v)$
+        }
+    }
+    \caption{\textsc{Merge}(G,s,t,d)}
+\end{algorithm}
+
+\subsubsection{\textsc{Unreachable}(G,s,t)}\label{Subsubsec: Unreachable}
+
+Let there be a graph $G$ such that it has a source vertex $s$ and a sink vertex $t$.
+A vertex $v$ is said to reachable if there exists a path from $s$ to $v$ and a path from $v$ to $t$.
+We define the function \textsc{Unreachable}(G,s,t) as the process of identifying the set of vertices that are unreachable in $G$.
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \KwData{G, s, t}
+    \KwResult{U}
+    $U = \emptyset$\;
+    $G' =$ \textsc{Merge}(G, s, t, d)\;
+    $S = \text{\textsc{FindScc}}(G')$\;
+    $R = \emptyset$\;
+    \For {$U_i \in S$} {
+        \If {$s \in U_i$} {
+            $R = U_i$
+        }
+    }
+    $U = V(G) \setminus R$\;
+    \caption{\textsc{Unreachable}(G,s,t)}
+\end{algorithm}
 
 
 % subsection of construction of scc tree
@@ -63,8 +169,181 @@ These definitions are instrumental in understanding the intricacies of the algor
 
 \subsection{Decremental Maintaince of SCC Tree}\label{Subsec: Decremental Maintaince of SCC Tree}
 
+In this section, we delve into the decremental maintenance of the SCC tree under the delete operation.
+As mentioned earlier, the \textsc{Delete}(u, v) operation removes the edge from vertex $u$ to vertex $v$ in the graph $G$.
+This deletion operation necessitates the corresponding update in the SCC tree to maintain the internal connectivity of the vertices within the strongly connected components.
+The deletion may also introduce new strongly connected components that may be formed due to the decomposition of the earlier SCCs.
+
+Given, a graph $G$ and an edge $(u, v)$ is to be deleted from the graph $G$. Suppose if the vertex $u$ and $v$ belong to different strongly connected component, 
+then the deletion of the edge $(u, v)$ will not affect any SCC tree. It would also not introduce any new SCCs, since the edge $(u, v)$ was not a part of any SCC.
+In this case, we can simply remove the edge $(u, v)$ from the edge set of the master node.
+
+However, if the vertices $u$ and $v$ belong to the same strongly connected component, then the deletion of the edge $(u, v)$ may introduce new SCCs or change the internal connectivity of the SCC tree.
+Therefore, while we delete an edge $(u, v)$, we first must identify the SCC tree node that contains the edge $(u, v)$. This can be done by 
+finding the lowest commen ancestor of the vertices $u$ and $v$ in the SCC tree. We then proceed to delete the edge from the identified node.
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \KwData{G, u, v}
+    \KwResult{G'}
+    \If {$\text{\textsc{Query}}(u, v) = false$} {
+        $\text{\textsc{STN}}(M).E = \text{\textsc{STN}}(M).E \setminus \{(u, v)\}$\;
+        \textbf{return}\;
+    }
+    $L = \text{\textsc{LCA}}(u, v)$\;
+    $\text{\textsc{STN}}(L).E = \text{\textsc{STN}}(L).E \setminus \{(u, v)\}$\;
+    \textsc{UpdateSCCTree}(L)\;
+    \caption{\textsc{Delete}(G, u, v)}
+\end{algorithm}
+
+After the deletion of the edge $(u, v)$, we must ensure that the SCC tree is updated to reflect the changes in the internal connectivity of the vertices.
+The updates ensures that the every vertex in each SCC tree node is reachable from the vertex $d_{out}$ and $d_{in}$, where $d$ is the vertex that was split to construct the SCC tree node,
+we refer \secref{\ref{Subsubsec: Unreachable}} for the definition.
+
+The following steps are performed to update the SCC tree after the deletion of the edge $(u, v)$ which belongs to the SCC tree node $L$, and $d$ is the vertex that was split to construct the SCC tree node $L$:
+\begin{itemize}
+    \item The unreachable vertices are removed form the SCC tree node $L$, and are added in the vertex set of the SCC tree node $p(L)$, where $p(L)$ denotes parent node of $L$.
+If $L$ is the root node, then the unreachable vertices form new SCC-tree's, and thus updating the master node and the SCC mapping array.
+    \item If vertices were removed from the SCC tree node $L$, then repeat the above steps for the parent node of $L$. This process stops when $L$ is the root node of the SCC tree, we then update the master node and the SCC mapping array.
+    \item If unreachable vertices are present, then we expose the connectivity of these vertices to the parent node of $L$. This can be achieved by transferring
+the edges that were a part of the unreachable vertices in $L$ to the parent node and also updating the edges in the edge set of the parent node that involved the unreachable vertices, which were a part of $L$.
+This can be seen in \figureref{\ref{fig:tree_node_r_graph_exposed1}}, further details can be found in \secref{\ref{Subsubsec: Deleting Edge from the Root Node}} and \secref{\ref{Subsubsec: Deleting Edge from an Internal Node}}.
+\end{itemize}
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \KwData{L | SCC Tree Node}
+    \KwResult{Updated SCC Tree}
+    $U = \text{\textsc{Unreachable}}(L, d_{in}, d_{out})$\;
+    \textbf{if} {$U == \emptyset$} \textbf{then} \textbf{return}\;
+    $E\_to\_expose = \emptyset$\;
+    \hspace{1em}\\    \{Step 1: Removing vertices and edges\} \\
+    \For {$v \in U$} {
+        $\text{\textsc{STN}}(L).V = \text{\textsc{STN}}(L).V \setminus \{v\}$\;
+    }
+    \For {$(u, v) \in \text{\textsc{STN}}(L).E$} {
+        \If {$u \in U$ or $v \in U$} {
+            $\text{\textsc{STN}}(L).E = \text{\textsc{STN}}(L).E \setminus \{(u, v)\}$\;
+            $E\_to\_expose = E\_to\_expose \cup \{(u, v)\}$\;
+        }
+    }
+    \phantom{text}\\   \{Step 2: Exposing the connectivity\} \\
+    \If {$L == \text{Root}$} {
+        $p(L) = \textsc{STN}(M)$\;
+    }
+    \For {$(u, v) \in \textsc{STN}(p(L)).E$} {
+        \For {$k \in U$} {
+            $P = \textsc{SccTree}(k).Label$\;
+            \If {$u \in P$} {
+                $\textsc{STN}(p(L)).E = \textsc{STN}(p(L)).E \setminus \{(u, v)\}$\;
+                $\textsc{STN}(p(L)).E = \textsc{STN}(p(L)).E \cup \{(k, v)\}$\;
+            }
+            \If {$v \in P$} {
+                $\textsc{STN}(p(L)).E = \textsc{STN}(p(L)).E \setminus \{(u, v)\}$\;
+                $\textsc{STN}(p(L)).E = \textsc{STN}(p(L)).E \cup \{(u, k)\}$\;
+            }
+        }
+    }
+    $\textsc{STN}(p(L)).E = \textsc{STN}(p(L)).E \cup E\_to\_expose$\;
+    $\textsc{STN}(p(L)).V = \textsc{STN}(p(L)).V \cup U$\;
+    \phantom{text}\\   \{ Step 3: Recursion (or) Updating the SCC Mapping Array\} \\
+    \If {$L \neq \text{Root}$} {
+        \textsc{UpdateSCCTree}(p(L))\;
+    }
+    \Else {
+        \For {$v \in U$} {
+            \For {$u \in \textsc{SccTree}(v).Label$} {
+                \If {$\textsc{STN}(u).E == \emptyset$} {
+                    $\textsc{SM}_G(u) = v$\;
+                }
+            }
+        }
+    }
+
+    \caption{\textsc{UpdateSCCTree}(L)}
+\end{algorithm}
+
+
 \input{content/graph/dec_root_node.tex}
 \input{content/graph/dec_internal_node.tex}
 
 \subsection{Incremental Maintaince of SCC Tree}\label{Subsec: Incremental Maintaince of SCC Tree}
-\blindtext
+
+In this section, we understand the process of maintaining the SCC tree under the add operation. The \textsc{Add}(u, v) operation introduces the edge from vertex $u$ to vertex $v$ in the graph $G$.
+This operation when performed may join strongly connected components or change the internal connectivity of the SCC tree.
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \KwData{G, u, v}
+    \KwResult{G'}
+    $L = \text{\textsc{LCA}}(u, v)$\;
+    $\text{\textsc{STN}}(L).E = \text{\textsc{STN}}(L).E \cup \{(u, v)\}$\;
+    \textsc{UpdateSCCTreeI}(L)\;
+    \caption{\textsc{Add}(G, u, v)}
+\end{algorithm}
+
+For graph $G$ and an edge $(u, v)$ is to be added to the graph $G$. Suppose if the vertex $u$ and $v$ belong to different strongly connected component, 
+then the addition of the edge $(u, v)$ might combine multiple SCCs to form a sigle larger SCC. In this case, we add the edge $(u, v)$ to the master node
+and update the SCC mapping array to reflect the newly formed SCC. A new SCC-tree node is introduced by adding the vertices and their corresponding edges which were a part of the SCCs that were combined in the master node.
+These combined SCCs become the children of the newly formed SCC-tree node. This new SCC-tree node has to propogate its updates to maintain the internal connectivity of the vertices.
+
+However, if the vertices $u$ and $v$ belong to the same strongly connected component, then the addition of the edge $(u, v)$ will never introduce any new SCCs, but would significantly change the internal structuring of the SCC tree.
+These changes are to be propogated to maintain the SCC-tree structure and property.
+The update propogation is nothing but re-running the SCC-tree creation algorithm on the SCC-tree node that has changes to propogate. The difference is that we do not have to re-run the algorithm on the entire graph, but only on the graphs stored in the SCC-tree nodes.
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \KwData{L | SCC Tree Node}
+    \KwResult{Updated SCC Tree}
+    $G = \textsc{STN}(L)$, $U = \text{\textsc{FindScc}}(G)$\;
+    \For {$U_i \in U$ \textbf{and} $|U_i| \neq 1$} {
+        $L_i = \textsc{Label}(U_i)$\;
+        $\textsc{STN}(L_i) = \textsc{STN}(L) \cap U_i$\;
+        $\textsc{STN}(L_i) = \textsc{Split}(\textsc{STN}(L_i), d)$\;
+        $\textsc{UpdateSCCTreeI}(L_i)$\;
+    }
+    $\textsc{STN}(L) = \textsc{Condense}(G)$\;
+    \For {$U_i \in U$ \textbf{and} $|U_i| = 1$} {
+        $T = U_i$\;
+        \While {$T \neq \emptyset$} {
+            $V = T.pop()$\;
+            \If {$\textsc{STN}(V).E == \emptyset$} {
+                $\textsc{SM}_G(V) = L_i$\;
+                \textbf{continue}\;
+            }
+            $T = T \cup \textsc{STN}(V).V$\;
+        }
+    }
+
+
+    \caption{\textsc{UpdateSCCTreeI}(L)}
+\end{algorithm}
+
+\subsubsection{Updating SCC-tree under the Add operation}\label{Subsubsec: Updating SCC-tree under the Add operation}
+
+We would now understand the process of updating the SCC-tree, when the edge $(u, v)$ is added to the graph $G$.
+The graph in \figureref{\ref{fig:graph2}} is considered for this example, we can observe the SCC-tree of the graph in \figureref{\ref{fig:scc_tree2}}.
+The graph has 3 stongly connected components which are identified by labels $R$, $5$ and $7$. 
+
+\input{content/graph/inc_ex_graph.tex}
+
+The edge $(3,5)$ is added to the graph, it combines the strongly connected components $R$, $5$ and $7$ to form a single SCC $R'$.
+This change can be seen in the figure \figureref{\ref{fig:graph2_condense}}, we notice that the edge (3,5) correponds to the edge (R',5)
+in the master node, which upon addtion combines the SCCs $R$, $5$ and $7$.
+
+\input{content/graph/inc_ex_add.tex}
+
+A new SCC-tree node $R'$ is introduced to represent the new SCC formed by the addition of the edge $(3,5)$.
+It captures the subgraph that is formed by the vertices and edges that were a part of the SCCs $R$, $5$ and $7$.
+The SCC-tree node $R'$ graph is split on the vertex $7$, as shown in \figureref{\ref{fig:stn_r_before_after_split}}.
+When we condense the graph in \textsc{STN}(R'), we find that the vertices $R$ and $5$ combine to form a single vertex $A$, as shown in \figureref{\ref{fig:stn_a_and_updated_scc_tree}}.
+
+\input{content/graph/inc_ex_new_node.tex}
+
+The new SCC-tree node $A$ is introduced that captures the subgraph formed by the vertices and edges that were a part of $R$ and $5$, in the SCC-tree node $R'$. 
+This graph can be seen in \figureref{\ref{fig:stn_a_and_updated_scc_tree}}, when we condense the graph in \textsc{STN}(A), we find that no combination of vertices is possible, and thus the SCC-tree is updated.
+The SCC-tree is updated to reflect changes brought by the addition of the edge $(3,5)$ is shown in \figureref{\ref{fig:stn_a_and_updated_scc_tree}}.
+
+\input{content/graph/inc_ex_new_node_a.tex}
+
+

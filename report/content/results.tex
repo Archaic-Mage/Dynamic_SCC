@@ -1,5 +1,50 @@
 \section{Results}\label{Sec: Results}
-\blindtext
+In this section, we present the results of the experiments conducted. The results are in the form of tables and graphs.
+The details of the graphs used in the experiments are presented in Table \ref{tab:graph_details}. 
+The tables \ref{tab:timed_results_g1} to \ref{tab:timed_results_g8} present the timings for the experiments conducted on the graphs. 
+The timings are presented in seconds. The tables present the timings for the decremental, incremental, and both update operations. 
+The timings presented, compares the standard static algorithm to the dynamically maintained parallel algorithm. 
+The timings are presented for different percentages of updates w.r.t. edges. 
+
+The machine specifications are retrieved using the \texttt{lscpu} command. The machine specifications are as follows:
+\begin{description}[font=\sffamily\bfseries\small,itemsep=0pt,parsep=0pt]
+    \item[Architecture:] x86\_64
+    \item[CPU op-mode(s):] 32-bit, 64-bit
+    \item[Byte Order:] Little Endian
+    \item[CPU(s):] 80
+    \item[On-line CPU(s) list:] 0-79
+    \item[Thread(s) per core:] 2
+    \item[Core(s) per socket:] 20
+    \item[Socket(s):] 2
+    \item[NUMA node(s):] 2
+    \item[Vendor ID:] GenuineIntel
+    \item[CPU family:] 6
+    \item[Model:] 85
+    \item[Model name:] Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz
+    \item[Stepping:] 7
+    \item[CPU MHz:] 1000.061
+    \item[CPU max MHz:] 3900.0000
+    \item[CPU min MHz:] 1000.0000
+    \item[BogoMIPS:] 5000.00
+    \item[Virtualization:] VT-x
+    \item[L1d cache:] 32K
+    \item[L1i cache:] 32K
+    \item[L2 cache:] 1024K
+    \item[L3 cache:] 28160K
+    \item[NUMA node0 CPU(s):] 0-19,40-59
+    \item[NUMA node1 CPU(s):] 20-39,60-79
+\end{description}
+
+The software specifications are retrieved using the \texttt{gcc --version}, \texttt{mpirun --version}, \texttt{boost --version}, and \texttt{cmake --version} commands.
+The kernel and OS specifications, are retrieved using the \texttt{hostnamectl} command. The above specifications are as follows:
+\begin{description}[font=\sffamily\bfseries\small,itemsep=0pt,parsep=0pt]
+    \item[Operating System:] Red Hat Enterprise Linux Server 7.6 (Maipo)
+    \item[Kernel:] 3.10.0-957.el7.x86\_64
+    \item[Compiler:] gcc version 9.2.0
+    \item[OpenMPI:] 3.1
+    \item[Boost:] 1.84.0
+    \item[CMake:] 2.8.12.2
+\end{description}
 
 \begin{table}[H]
     \centering
@@ -20,6 +65,11 @@
     \end{tabular}
     \label{tab:graph_details}
 \end{table}
+
+The each graph, the algorithm was tested by increasing the total number of updates w.r.t. the percentage of edges present in the graph. 
+The $0$ percent edge updates, indicates the time taken to initialization the SCC-tree for the maintaince process. 
+The subsequent tests conducted, reveal the time taken to update the SCC-tree for the given percentage of updates. 
+All the testing was conducted on the same machine, with \texttt{-np} parameter set to $64$ for the \texttt{mpirun} command.
 
 
 \begin{table}[H]

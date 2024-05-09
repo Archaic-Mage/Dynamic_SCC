@@ -1,11 +1,17 @@
 \subsubsection{Deleting Edge from the Root Node}\label{Subsubsec: Deleting Edge from the Root Node}
 
+We first consider the case when the deleted edge (u, v) belongs to the root node of the SCC tree.
+The edge is deleted from the graph held in \textsc{STN}(R) as show in \figureref{\ref{fig:tree_node_r_graph_after_dedge1}}.
+As we can see in \figureref{\ref{fig:graph_after_dedge_4_to_1}}, the unreachable nodes A and B are removed from \textsc{STN}(R)
+and form their own tree nodes in the SCC tree. The SCC-tree corresponding to label $A$ and $B$ gets separated from $R$ and form 
+new SCC-trees with root node $A$ and $B$ respectively. The SCC tree is updated as shown in \figureref{\ref{fig:scc_tree_graph_after_del}}.
+
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.45\textwidth}
         \centering
         \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+            thick,main node/.style={font=\sffamily\large\bfseries}]
 
         % Define vertices
         \node[main node] (1) {$1_{in}$};
@@ -29,7 +35,7 @@
     \begin{subfigure}{0.45\textwidth}
         \centering
         \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+            thick,main node/.style={font=\sffamily\large\bfseries}]
 
         % Define vertices
         \node[main node] (1) {$1_{in}$};
@@ -139,13 +145,15 @@
     \label{fig:scc_tree_after_update_propogation}
 \end{figure}
 
+The example in \figureref{\ref{fig:tree_node_r_graph_after_dedge2}} shows the graph in \textsc{STN}(R) after deleting edge 3 to 8. In this case,
+the nodes A and B are still reachable and hence remain in the SCC-tree node R. 
 
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.45\textwidth}
         \centering
         \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+            thick,main node/.style={font=\sffamily\large\bfseries}]
 
         % Define vertices
         \node[main node] (1) {$1_{in}$};
@@ -168,7 +176,7 @@
     \begin{subfigure}{0.45\textwidth}
         \centering
         \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+            thick,main node/.style={font=\sffamily\large\bfseries}]
 
         % Define vertices
         \node[main node] (1) {$1_{in}$};

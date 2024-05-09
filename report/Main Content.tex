@@ -1,4 +1,4 @@
-\documentclass[12pt]{article}
+\documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{Preambles/preamble}
 
@@ -49,20 +49,14 @@
 %Sections before Main Content of report
 
 \newpage
-\section*{Conventions and Notation}\label{Conventions}
-\addcontentsline{toc}{subsection}{\textit{Conventions and Notation}}
-\begin{enumerate}[i.]
-\item A convention you use here, e.g. Unless otherwise stated we use units such that $c=1$.
-\end{enumerate}
 
-\vspace{2em}
-
+\section*{Acronyms}\label{Acronyms}
 \addcontentsline{toc}{subsection}{\textit{Acronyms}}
-\printacronyms
-\newacronym{mpi}{MPI}{Message Passing Interface: A standard for parallel computing}
-\newacronym{scc}{SCC}{Strongly Connected Components}
-\newacronym{dag}{DAG}{Directed Acyclic Graph}
-\newacronym{stn}{STN}{SCC Tree Node}
+\begin{description}[style=unboxed,font=\small]
+    \item[MPI:]\label{mpi} Message Passing Interface
+    \item[SCC:]\label{scc} Strongly Connected Components
+    \item[STN:]\label{stn} SCC-Tree Node
+  \end{description}
 \vspace{2em}
 
 \listoffigures

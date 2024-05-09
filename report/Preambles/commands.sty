@@ -3,12 +3,13 @@
 \usepackage{listings}
 \usepackage{tikz}
 \usetikzlibrary{calc}
+\usetikzlibrary{positioning}
+\usepackage{enumitem}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{blindtext}                              %Just for the template
 \usepackage{setspace}
 \usepackage{mathbbol}
-% \usepackage{amsmath, amssymb}
 \usepackage{amsmath, amssymb, cancel}               %Define maths areas 
 \allowdisplaybreaks             
 %Allow align environments etc to cross pages. To disallow a certain linebreak use \\*
@@ -26,6 +27,7 @@
 \usepackage{float} %so you can use [H] to force figure locations
 \usepackage{svg} %allows use of svg figures
 \usepackage[font=small]{caption} %obvious
+\usepackage[T1]{fontenc}
 \captionsetup{width=0.8\textwidth}
 
 \usepackage[symbol]{footmisc} %Allows variation in footnote symbols, necessary for thanks
@@ -35,10 +37,6 @@
 \usepackage[none]{hyphenat} %Prevents word hyphenation over lines
 \usepackage{tocloft}
 \usepackage{parskip} %allows variation on paragraph spacing
-
-\usepackage[acronym]{glossaries} %For Acronyms section and possibly glossary
-\makeglossaries
-\newcommand{\ac}[1]{\acrshort{#1}}
 
 \usepackage[
     left=2.5cm,
@@ -127,3 +125,10 @@
 }
 
 \lstset{style=mystyle}
+ 
+
+% algorithm2e settings
+\SetAlFnt{\small}
+\SetAlCapFnt{\small}
+\SetAlCapNameFnt{\small}
+

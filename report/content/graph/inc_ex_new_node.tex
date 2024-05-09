@@ -1,0 +1,74 @@
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
+                            thick,main node/.style={font=\sffamily\large\bfseries}]
+
+        % Define vertices
+        \node[main node] (R) {R};
+        \node[main node] (5) [below right of=R] {5};
+        \node[main node] (7) [below left of=R] {7};
+
+        % Draw edges
+        \path[every node/.style={font=\sffamily\small}]
+            (5) edge[bend right] (R)
+            (5) edge[bend left] (7)
+            (7) edge[bend right] (R)
+            (7) edge[bend left] (R)
+            (R) edge[bend right] (5);
+
+        \end{tikzpicture}
+        \caption{\textsc{STN}(R') before \textsc{Split}}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
+                            thick,main node/.style={font=\sffamily\large\bfseries}]
+
+        % Define vertices
+        \node[main node] (7) {$7_{in}$};
+        \node[main node] (77) [right of=7] {$7_{out}$};
+        \node[main node] (5) [below of=77] {5};
+        \node[main node] (R) [below of=7] {R};
+
+        % Draw edges
+        \path[every node/.style={font=\sffamily\small}]
+            (7) edge[bend right] (R)
+            (7) edge[bend left] (R)
+            (5) edge[bend right] (77)
+            (5) edge[bend left] (R)
+            (R) edge[bend left] (5);
+
+        \end{tikzpicture}
+        \caption{\textsc{STN}(R') after \textsc{Split}}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \begin{tikzpicture}[level distance=1.25cm,
+                            level 1/.style={sibling distance=1cm},
+                            level 2/.style={sibling distance=1cm},
+                            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+
+        % Define vertices
+        \node[main node] (R') {R'}
+            child {node[main node] (R) {R}
+                child {node[main node] (1) {1}}
+                child {node[main node] (2) {2}}
+                child {node[main node] (3) {3}}
+                child {node[main node] (B) {B}
+                    child {node[main node] (4) {4}}
+                    child {node[main node] (6) {6}}
+                    child {node[main node] (8) {8}}
+                }
+            }
+            child {node[main node] (5) {5}}
+            child {node[main node] (7) {7}};
+        \end{tikzpicture}
+
+        \caption{updated SCC-tree}     
+    \end{subfigure}
+    \caption{\textsc{STN}(R') before and after \textsc{Split} and updated SCC-tree}
+    \label{fig:stn_r_before_after_split}
+\end{figure}
+ 

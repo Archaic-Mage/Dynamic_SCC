@@ -1,11 +1,340 @@
 \section{Practical Implementation} \label{Sec: Practical Implementation}
-\blindtext
+
+In this part, we delve into the practical implementation of our algorithm for maintaining strongly connected components (SCCs) within large-scale graphs using MPI in C++. 
+By leveraging MPI's robust framework, we endeavor to unlock the full potential of parallelism, distributing the computational load across multiple nodes to expedite the identification and maintenance of SCCs.
+
+Message Passing Interface (\hyperref[mpi]{MPI}), is a standardized and portable message-passing system designed to facilitate parallel computing across a distributed memory system.
+In the further sections, we will discuss the data structures used, the workload distribution in parallel, and the cache optimizations that were implemented to enhance the performance of our algorithm.
+
+We will be using the Boost MPI library for the implementation of the algorithm. The Boost MPI library provides a high-level interface for the Message Passing Interface (MPI) standard, enabling the development of parallel applications in C++.
+We would also be using the Boost Serialization library for serializing the data structures used in the algorithm. This library provides a framework for serializing and deserializing C++ data structures to and from a sequence of bytes, facilitating the transmission of data across a network.
+
 \subsection{Data Structures}\label{Subsec: Data Structures}
-\blindtext
+In distributed parallel computing, the efficacy of algorithms often hinges upon the efficiency of their underlying data structures. 
+In this section, we discuss the design and characteristics of the data structures introduced in the theoretical underpinnings of our SCC maintenance algorithm.
+By elucidating their intricacies, time complexities, and other pertinent aspects, we aim to provide a comprehensive understanding of their role in facilitating efficient graph analysis within a distributed computing environment.
+
+\subsubsection{SCC Tree}\label{Subsubsec: SCC Tree DS}
+The SCC-tree introduced in \secref{\ref{Subsubsec: SCC Tree}} is a hierarchical data structure that encapsulates the SCCs within a directed graph.
+It comprises of various components, including the SCC-tree node, the SCC-tree edge, and the SCC-tree itself.
+
+The Edge class is a simple data structure that encapsulates the source and destination vertices of an edge within the graph stored in a SCC-tree node.
+The serialization and equality operator overloads are implemented to facilitate the serialization of the Edge object and comparison of two Edge objects.
+The Edge class is defined in Lst.\ref{lst:edge}.
+
+\begin{lstlisting}[language=C++, caption={Edge}, label={lst:edge}]
+class Edge {
+public:
+    long int from;
+    long int to;
+
+    Edge() {}
+    Edge(int from , int to) : from(from), to(to) {}
+
+    friend boost::serialization::access;
+    template < class Archive >
+    void serialize(Archive & ar, const unsigned int version) {
+        ar & from;
+        ar & to;
+    }
+
+    bool operator==(const Edge& other) const {
+        return from == other.from && to == other.to;
+    }
+};
+\end{lstlisting}
+
+The SCC-tree node class encapsulates vertices and edges connecting them, forming a graph, as discussed in \secref{\ref{Subsubsec: SCC Tree}}.
+The class comprises various components, including the label, parent, corresponds-to, contains, and dept, which are described in detail in Lst.\ref{lst:scc_tree_node}.
+The SCC-tree node class also includes various functions, such as condenseFill, checkUnreachable, updateLabels, exposeToParent, and removeEdge, which are used to manipulate the SCC-tree node and its components.
+
+\begin{lstlisting}[language=C++, caption={SCC-Tree Node}, label={lst:scc_tree_node}]
+class TreeNode {
+public:
+    /**
+        * @brief this would represent the label of the node in the SCC tree
+        * the label is unique for each node in the SCC tree
+        * 
+        */
+    long int                            label;
+    /**
+        * @brief this represents the parent of the current node in the SCC tree
+        *  and is used to traverse the tree upwords.
+        * 
+        */
+    long int                            parent;
+    /**
+        * @brief stores the actual edge to labelled edge pair,
+        * nodes forming a scc are condesed to one labelled node, and so are the edges,
+        * the corresponds_to is used to store the actual edges to labelled edges
+        * relationship.
+        * 
+        */
+    std::vector<std::pair<Edge, Edge>>  corresponds_to;
+    /**
+        * @brief contains the nodes which are part of the current node in the SCC tree.
+        * They store the label of the child nodes and is used to travese the tree 
+        * downwards.
+        * 
+        */
+    std::unordered_set<long int>        contains;
+    /**
+        * @brief stores the depth of the current node in the SCC tree and is
+        * used to find the LCA of two nodes (Lowest Common Ancestor), 
+        * important for update operations.
+        * 
+        */
+    long int                            dept;
+    /**
+        * @brief The following function is used to serialize the TreeNode object,
+        * this is essential for the boost::serialization to work. The TreeNodes are 
+        * transferred during update queries.
+        * 
+        */
+    friend                              boost::serialization::access;
+    template < class Archive >
+    void serialize(Archive & ar, const unsigned int version) {
+        ar & label;
+        ar & parent;
+        ar & corresponds_to;
+        ar & contains;
+        ar & dept;
+    }
+
+    /**
+        * @brief the function is used to fill the corresponds_to edge pairs for the 
+        * current node.The sccs is used to find the labelling of the nodes in the 
+        * graph and create the corresponding edges in the SCC tree.
+        * 
+        * @param edges are the actual edge present in the graph
+        * @param sccs is a unordered_map which stores the nodes and their 
+        * corresponding sccs to which they belong.
+        */
+    void condenseFill(std::vector<Edge>& edges, 
+                std::unordered_map<long int, long int>& sccs);
+    /**
+        * @brief the function is used to find the unreachable nodes in the current node.
+        * 
+        * @param unreachable is a set which stores the unreachable nodes after its 
+        * execution.
+        */
+    void checkUnreachable(std::unordered_set<long int>& unreachable);
+    /**
+        * @brief the function is used to update the labels of the nodes in the 
+        * current node.
+        * 
+        * @param new_labels is a unordered_map which stores the new labels of the nodes.
+        */
+    void updateLabels(std::unordered_map<long int, long int>& new_labels);
+    /**
+        * @brief the function is used to indentify the edges which are unreachable 
+        * in the current node, and transfer them to the parent by appropriately updating
+        * their labels and adding them to the parent node.
+        * 
+        * @param parent The parent node to which the unreachable edges are to be 
+        * transferred
+        * @param unreachable Set of unreachable nodes in the current node
+        */
+    void exposeToParent(TreeNode& parent, std::unordered_set<long int> unreachable);
+    /**
+        * @brief the function is used to remove the edge from the current node.
+        * 
+        * @param edge The edge to be removed from the current node
+        */
+    void removeEdge(const Edge& edge);
+
+    //copy constructor
+    TreeNode(const TreeNode& other) {
+        label = other.label;
+        parent = other.parent;
+        corresponds_to = other.corresponds_to;
+        contains = other.contains;
+        dept = other.dept;
+    }
+    //assignment operator
+    TreeNode& operator=(const TreeNode& other) {
+        label = other.label;
+        parent = other.parent;
+        corresponds_to = other.corresponds_to;
+        contains = other.contains;
+        dept = other.dept;
+        return *this;
+    }
+    //default constructor
+    TreeNode() {
+        label = -1;
+        parent = -1;
+        dept = 0;
+    }
+};
+\end{lstlisting}
+
+The SCC-tree is collection of SCC-tree nodes, forming a tree structure that encapsulates the SCCs within a directed graph.
+This information is stored in the form of mappings between the labels of the nodes and the corresponding SCC-tree nodes.
+We hold the labels of the root nodes of the SCC-tree in a vector, which is used to traverse the tree and perform various operations.
+
+\begin{lstlisting}[language=C++, label={lst:scc_tree}]
+    std::vector<long int> root_nodes;
+    std::unordered_map<long int, TreeNode> scc_tree_nodes;
+\end{lstlisting}
+
+\subsubsection{SCC Mapping Array}\label{Subsubsec: SCC Mapping Array DS}
+The SCC mapping array is a data structure that would store the mapping of the vertices to the SCCs label they belong to.
+We use an unordered map to store this information as it provides an average time complexity of O(1) for insertion, deletion, and lookup operations.
+\begin{lstlisting}[language=C++, label={lst:scc_mapping_array}]
+    std::unordered_map<long int, long int> scc_mapping;
+\end{lstlisting}
+
 \subsection{Workload Distribution in Parallel}\label{Subsec: Workload Distribution in Parallel}
-\blindtext
+In this section, we discuss how the workload is distributed across multiple nodes in a parallel computing environment using MPI.
+The algorithm is designed to distribute the graph data across multiple nodes, with each node responsible for processing them separately.
+In future references, we will refer to these nodes as cores or processors interchangeably. Every core is assigned a unique rank, which is used to identify them in the MPI environment.
+These cores would each be reposible for storing an instance of class \textit{MaintainSCC}, which would contain nessary data structures and functions to perform the SCC maintenance operations.
+
+The \textit{MaintainSCC} class contains the following:
+\begin{itemize}
+    \item \textsc{SCC\_LABEL}: A unique label that is assigned, if we form a new SCC-tree node. It is an integer corresponding to the next available (unused) label.
+    \item world\_size: The total number of cores in the MPI environment, used to assigned workload.
+    \item roots: A vector that stores the labels of the root nodes of the SCC-tree.
+    \item scc\_tree\_nodes: A map that stores the mapping between the labels of the nodes and the corresponding SCC-tree nodes.
+    \item delete\_cache: A set that stores the nodes that were affected by the deletion of edges.
+    \item insert\_cache: A set that stores the nodes that were affected by the insertion of edges.
+    \item rank: A map that stores a mapping between each vertex in the graph and the rank of the core that is responsible for it. In other words, it stores the rank of the core that contains the vertex.
+    \item scc\_mapping: A map that stores the mapping between the vertices and the SCCs they belong to.
+\end{itemize}
+
+Since, MPI is a message passing interface, we need to define the message types that would be used to communicate between the cores. The following message types are defined:
+\begin{itemize}
+    \item SCC\_TREE: Used to transfer data that is used in the creation of SCC-tree.
+    \item EDGE\_DELETE: Used to transfer the edges that need to be deleted between the cores.
+    \item EDGE\_INSERT: Used to transfer the edges that need to be inserted between the cores.
+    \item EDGE\_QUERY: Used to transfer the edges that need to be queried between the cores.
+    \item SCC\_TRANSFER: Used to transfer the SCC-tree for load balancing.
+    \item CLR\_DEC\_CACHE: Used to clear the delete cache.
+    \item CLR\_INC\_CACHE: Used to clear the insert cache.
+    \item EXIT: Used to signal the end of the program.
+\end{itemize}
+
+\begin{lstlisting}[language=C++, label={lst:workload_distribution}]
+class MaintainSCC {
+
+    long int                                SCC_LABEL = 0;
+    const long int                          MOD = 1e10;
+    int                                     world_size;
+    std::vector<long int>                   roots;
+    std::unordered_map<long int, TreeNode>  scc_tree_nodes;
+    std::set<Cache, DecCache>               delete_cache;
+    std::set<Cache, IncCache>               insert_cache;
+    std::unordered_map<long int, int>       rank;
+    std::unordered_map<long int, long int>  scc_mapping;
+
+    enum MessageType
+    {
+        SCC_TREE,
+        EDGE_DELETE,
+        EDGE_INSERT,
+        EDGE_QUERY,
+        SCC_TRANSFER,
+        CLR_DEC_CACHE,
+        CLR_INC_CACHE,
+        EXIT
+    };
+
+    /** some internal functions **/
+    /**         .......         **/
+public:
+    bool query(long int v1, long int v2);
+    void deleteEdges(std::vector<Edge> &decrement);
+    void insertEdges(std::vector<Edge> &increament);
+    void endAll();
+
+    MaintainSCC(long int n, std::vector<Edge> &edges);
+    ~MaintainSCC();
+};
+\end{lstlisting}
+
+The 0th core is responsible for the initialization of the graph and the distribution of the workload across the cores.
+It takes in the entire graph and runs the SCC algorithm to find the SCCs in the graph, and then distributes the vertices and edges across the cores based on the SCCs they belong to.
+The other cores are responsible for constructing the SCC-tree and maintaining the SCCs in the graph, this distribution is stored in the \textit{rank} map. During this process, the 0th core also constructs and maintains the master node and the SCC mapping array.
+
+The other cores work parallelly to construct the SCC-tree in the initialization stage. Once the SCC-tree is constructed, the cores are synchorized and ready for the update queries.
+When we call for an update, it is processed in the 0th core, which identifies to which core the update belongs to and sends the same. Upon recieving the update, the core processes the update and sends the result back to the 0th core.
+The following situation may arise:
+\begin{itemize}
+    \item In case of an insert query, two SCCs might get combined to form a new SCC. Here, the master node is updated in the 0th core and upon identifying the 
+SCCs that are combined, the SCC-tree corresponding to these components are sent from their respective cores to a common one. This
+ensures that the update propogation happens in a synchorized and easier manner.
+    \item In case of a delete query, the SCCs might get divided into two or more SCCs. In this case, the labels of the newly created SCCs are sent to the 0th core, which then updates the master node, the SCC mapping array and sends the new label - core mapping back to the updated core.
+Upon recieving the new label - core mapping, the current core sends these SCCs to the respective cores, thereby balancing the load.
+\end{itemize}
+
+All other functionallity are implemented based on the above mentioned design and algorithm in \secref{\ref{Sec: Theoretical Methodology}}. The public functions in the \textit{MaintainSCC} class are used to interact with the cores and perform the necessary operations.
+These functions can only be called from the 0th core, which then analyzes and forwards the request to the respective core.
+
 \subsection{Update Cache Optimizations}\label{Subsec: Cache Optimizations}
-\blindtext
+
+In the section, we discuss the cache optimizations that were implemented to enhance the performance of the algorithm.
+When we delete or insert an edge in the graph, it affects the structuring of the SCC-tree and hence the changes have to be propogated.
+We notice that the process of propogation of changes is time consuming and can be optimized by caching the changes and propogating them in batches.
+For understanding the cache optimizations, we need to understand the following, referring to the article \cite{scc_tree_reference}:
+\begin{itemize}
+    \item An SCC-tree can be constructed in $O(m\delta)$ time, where $\delta$ is the height of
+the resulting tree and $m$ is the edges part of that tree. It requires $O(n + m)$ space.
+    \item Given an SCC-tree of height $\delta$, the algorithm processes any sequence of
+    edge updates in $O(m\delta)$ total time and answers each query in $O(1)$ time, using $O(n + m)$
+    space.
+\end{itemize}
+
+Given a SCC-tree of height $\delta$, we can delete or insert an edge in $O(\delta)$ time. This is because the deletion or insertion of an edge can affect the SCC-tree in the worst case by $\delta$ levels.
+The propogation of changes can be done in $O(m\delta)$ time, thus it is beneficial to cache the changes and propogate them in batches.
+
+Suppose there are $t$ updates to the graph, then the time complexity of the entire process would be $O(tm\delta)$, with the cache optimizations, the time complexity would be $O(m\delta + t\delta)$,
+where $t\delta$ is time taken to delete/insert edge only, and $m\delta$ is time taken to propogate changes. The time complexity is reduced from $O(tm\delta)$ to $O((m + t)\delta)$.
+
+\begin{lstlisting}[language=C++, caption={Cache Optimizations}, label={lst:cache_optimizations}]
+class Cache {
+public:
+    long int        dept;
+    long int        label;
+
+    bool operator<(const Cache& other) const {
+        return dept < other.dept;
+    }
+    bool operator==(const Cache& other) const {
+        return dept == other.dept && label == other.label;
+    }
+};
+
+class DecCache : public Cache {
+public:
+    bool operator() (const Cache& a, const Cache& b) const {
+        return a.dept > b.dept;
+    }
+};
+
+class IncCache : public Cache {
+public:
+    bool operator() (const Cache& a, const Cache& b) const {
+        return a.dept < b.dept;
+    }
+};
+
+std::set<Cache, DecCache>               delete_cache;
+std::set<Cache, IncCache>               insert_cache;
+\end{lstlisting}
+
+We notice in \secref{\ref{Subsec: Decremental Maintaince of SCC Tree}} and \secref{\ref{Subsec: Incremental Maintaince of SCC Tree}}, 
+that for decremental changes we need to propogate the changes from the node to the parent, and for incremental changes we need to propogate the changes from the node to the child node.
+Thus, we use two sets, one for decremental changes and one for incremental changes with following properties:
+\begin{itemize}
+    \item The class \textit{Cache} is used to store the label of the node and its depth in the SCC-tree.
+    \item The class \textit{DecCache} is used to define sorting order for the decremental cache, where the nodes are sorted in decreasing order of their depth.
+Since, we need to propogate the changes from the node to the parent, we need to start from the deepest node and move upwards.
+    \item The class \textit{IncCache} is used to define sorting order for the incremental cache, where the nodes are sorted in increasing order of their depth.
+Since, we need to propogate the changes from the node to the child node, we need to start from the shallowest node and move downwards.
+
+\end{itemize}
+
 \begin{table}[H]
     \centering
     \caption{Timings with/without Cache Optimizations}
@@ -27,6 +356,31 @@
 \end{table}
 
 \subsection{Challenges in Implementation with MPI}\label{Subsec: Challenges in Implementation with MPI}
-\blindtext
 
-
+Utilizing the MPI library in C++ for distributed parallel computing introduces a unique set of challenges that demand careful consideration and adept problem-solving strategies. 
+Below, we outline some common challenges encountered during MPI programming and the way we dealt with them:
+\begin{itemize}
+    \item \textbf{Load Balancing}: One of the primary challenges in distributed computing is ensuring that the workload is evenly distributed across all nodes.
+We addressed this issue by distributing the vertices and edges based on the SCCs they belong to, thereby ensuring that each core receives a balanced workload.
+Though this approach is effective, it may lead to an imbalance in the workload if the graph is not well-distributed.
+We plan to address this issue by implementing load balancing based upon the number of SCC-tree nodes each core is responsible for, in the future iterations of the algorithm.
+This would ensure that each core receives an equal number of SCC-tree nodes, thereby balancing the workload.
+    \item \textbf{Communication Overhead}: In a distributed computing environment, communication overhead can significantly impact the performance of the algorithm. This is especially true in MPI programming, where inter-process communication is a crucial aspect.
+We tried to minimize the communication overhead by reducing the number of messages exchanged between the cores. This was achieved by the work distribution strategy, where the 0th core is responsible for processing the updates and distributing them to the respective cores.
+    \item \textbf{Synchronization}: Synchronization is a critical aspect of parallel computing, especially in distributed environments where multiple nodes are involved.
+Since, the updates are processed parrallely in the cores, we had to ensure that the cores are synchronized, by using specialized Message Types to signal the end of the program and to synchronize the cores. 
+MPI provides various synchronization mechanisms, such as barriers and point-to-point communication, which we leveraged to ensure that the cores are synchronized.
+    \item \textbf{SCC-tree transfer}: When an SCC is formed or divided, the SCC-tree corresponding to these SCCs needs to be transferred between the cores.
+These transfers can lead to deadlocks if not handled properly, as the cores may be waiting for each other to send the SCC-tree. We addressed this issue by using a two-phase commit protocol, 
+where the cores first signal the 0th core about the SCCs that are formed or divided, and then the 0th core sends the SCC-tree to the respective cores.
+    \item \textbf{Memory Management and Resource Consumption}:  Inefficient memory utilization and excessive resource consumption can lead to performance degradation and system instability.
+The testing server was very much capable of handling the memory requirements of the algorithm, but this might not be the case in a real-world scenario.
+The implementation must be optimized to minimize memory consumption and ensure efficient resource utilization, by using memory pooling and other memory management techniques.
+    \item \textbf{Debugging and Testing}: Debugging and testing distributed parallel algorithms can be challenging due to the inherent complexity of the system.
+We used various debugging tools provided by MPI, such as MPI\_Error\_string and MPI\_Abort, to identify and resolve issues in the code. 
+We also employed unit testing and integration testing to ensure that the algorithm functions correctly in a distributed environment.
+The testing was done on a local cluster, and the results were compared with the sequential implementation to verify the correctness of the algorithm.
+    \item \textbf{Recursion Limit}: The SCC-tree construction algorithm is recursive in nature, which can lead to stack overflow errors if the recursion depth is too high.
+We addressed this issue by implementing iterative versions of recursive algorithms where possible to avoid stack overflow issues. 
+Alternatively, increase the stack size or switch to non-recursive approaches to mitigate segmentation faults.
+\end{itemize}

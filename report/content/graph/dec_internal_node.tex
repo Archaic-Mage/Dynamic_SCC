@@ -1,11 +1,16 @@
 \subsubsection{Deleting Edge from an Internal Node}\label{Subsubsec: Deleting Edge from an Internal Node}
 
+In this example, we consider the case when the deleted edge (u, v) belongs to an internal node of the SCC tree.
+The edge (4, 8) is deleted from the graph held in \textsc{STN}(B), since the lowest common ancestor of 4 and 8 is B from the SCC tree in \figureref{\ref{fig:scc_tree_graph1}}.
+We can see in \figureref{\ref{fig:tree_node_b_graph_after_dedge1}} that after removing the edge (4, 8) from the graph in \textsc{STN}(B), vertices 6 and 8 become unreachable from 4.
+
+
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.45\textwidth}
         \centering
         \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+            thick,main node/.style={font=\sffamily\large\bfseries}]
 
         % Define vertices
         \node[main node] (4) {$4_{in}$};
@@ -28,7 +33,7 @@
     \begin{subfigure}{0.45\textwidth}
         \centering
         \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+            thick,main node/.style={font=\sffamily\large\bfseries}]
 
         % Define vertices
         \node[main node] (4) {$4_{in}$};
@@ -50,12 +55,17 @@
     \label{fig:tree_node_b_graph_after_dedge1}
 \end{figure}
 
+Since, vertices 6 and 8 are unreachable from 4, we expose these vertices and the corresponding edges in \textsc{STN}(B) to its parent node R.
+As shown in \figureref{\ref{fig:tree_node_r_graph_exposed1}}, the unreachable nodes 6 and 8 are exposed to the parent node R by adding edges (8,6), (6,4) from $B$ and
+changing the edges (A,B), (B, $1_{in}$) in $R$ to (A,8), (4, $1_{in}$) respectively. The red line in \figureref{\ref{fig:tree_node_r_graph_exposed1}} shows the exposed graph
+which was initially a part of $B$.
+
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.45\textwidth}
         \centering
         \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+            thick,main node/.style={font=\sffamily\large\bfseries}]
 
         % Define vertices
         \node[main node] (1) {$1_{in}$};
@@ -78,7 +88,7 @@
     \begin{subfigure}{0.45\textwidth}
         \centering
         \begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-            thick,main node/.style={circle,draw,font=\sffamily\bfseries}]
+            thick,main node/.style={font=\sffamily\large\bfseries}]
 
         % Define vertices
         \node[main node] (1) {$1_{in}$};
@@ -106,6 +116,9 @@
     \end{subfigure}
     \caption{Graph in SCC Tree Node R after unreachable nodes and its corresponding edges are exposed}
 \end{figure}
+
+We observe that every vertex in \figureref{\ref{fig:tree_node_r_graph_exposed1}} is reachable, thereby concluding the algorithm.
+The above edge and vertex exposure process has a change in the SCC-tree, which is shown in \figureref{\ref{fig:scc_tree_after_update_propogation2}}.
 
 \begin{figure}[H]
 \centering
@@ -166,24 +179,3 @@
 \caption{Tree updates are propogated, deleting edge 4 to 8}
 \label{fig:scc_tree_after_update_propogation2}
 \end{figure}
-
-\begin{algorithm}[H]
-    \SetAlgoLined
-    \KwData{Input data}
-    \KwResult{Output result}
-    initialization\;
-    \While{termination condition is not met}{
-        perform action\;
-        update state\;
-    }
-    \caption{Example Algorithm}
-\end{algorithm}
-
-\begin{lstlisting}[language=C++, caption={Example C++ code}, label={lst:example_cpp_code}]
-#include <iostream>
-
-int main() {
-    std::cout << "Hello, world!" << std::endl;
-    return 0;
-}
-\end{lstlisting}
