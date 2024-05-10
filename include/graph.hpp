@@ -159,8 +159,26 @@ public:
      * @param unreachable is a set which stores the unreachable nodes after its execution.
      */
     void checkUnreachable(std::unordered_set<long int>& unreachable);
+    /**
+     * @brief the function is used to update the labels of the nodes in the current node.
+     * 
+     * @param new_labels is a unordered_map which stores the new labels of the nodes.
+     */
     void updateLabels(std::unordered_map<long int, long int>& new_labels);
+    /**
+     * @brief the function is used to indentify the edges which are unreachable 
+     * in the current node, and transfer them to the parent by appropriately updating
+     * their labels and adding them to the parent node.
+     * 
+     * @param parent The parent node to which the unreachable edges are to be transferred
+     * @param unreachable Set of unreachable nodes in the current node
+     */
     void exposeToParent(TreeNode& parent, std::unordered_set<long int> unreachable);
+    /**
+     * @brief the function is used to remove the edge from the current node.
+     * 
+     * @param edge The edge to be removed from the current node
+     */
     void removeEdge(const Edge& edge);
 
     //copy constructor
@@ -190,12 +208,39 @@ public:
 
 class Cache {
 public:
+    /**
+     * @brief The depth of the node label in the SCC tree
+     * This is used to sort the nodes in the cache in the
+     * order of processing.
+     * 
+     */
     long int        dept;
+    /**
+     * @brief The label of the node in the SCC-tree node
+     * This is used to uniquely identify the node when 
+     * processing the cache.
+     */
     long int        label;
 
+    /**
+     * @brief This function is used to enable the structure 
+     * to be used in an unordered_set.
+     * 
+     * @param other 
+     * @return true 
+     * @return false 
+     */
     bool operator<(const Cache& other) const {
         return dept < other.dept;
     }
+    /**
+     * @brief Comparator == for the Cache objects,
+     * This comparator is essential for the set operations to work
+     * 
+     * @param other 
+     * @return true 
+     * @return false 
+     */
     bool operator==(const Cache& other) const {
         return dept == other.dept && label == other.label;
     }
@@ -203,6 +248,17 @@ public:
 
 class DecCache : public Cache {
 public:
+    /**
+     * @brief The comparator for the DecCache object
+     * sorts the nodes in the decreasing order of their depth
+     * because the nodes with lower depth are processed first and 
+     * we move upwards in the tree while propogating the changes.
+     * 
+     * @param a 
+     * @param b 
+     * @return true 
+     * @return false 
+     */
     bool operator() (const Cache& a, const Cache& b) const {
         return a.dept > b.dept;
     }
@@ -210,6 +266,17 @@ public:
 
 class IncCache : public Cache {
 public:
+    /**
+     * @brief The comparator for the IncCache object, this sorts the 
+     * nodes in the increasing order of their depth, because the nodes
+     * with higher depth are processed first and we move downwards in the
+     * tree while propogating the changes.
+     * 
+     * @param a 
+     * @param b 
+     * @return true 
+     * @return false 
+     */
     bool operator() (const Cache& a, const Cache& b) const {
         return a.dept < b.dept;
     }
@@ -248,10 +315,10 @@ class MaintainSCC {
     };
 
     int getLabel();
-    // void findScc(const std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
     void traverseNode(int node, std::unordered_map<long int, long int> &new_sccs);
     void splitGraphOnNode(std::vector<Edge> &edges, long int node);
-    void divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<Edge>> &sccEdges);
+    void divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, 
+                    std::unordered_map<long int, std::vector<Edge>> &sccEdges, std::vector<Edge> &inter_scc_edges, bool split);
     void makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &currentNode);
     void makeSccTree(std::vector<Edge> &edges, std::vector<long int> &nodes);
     void changeSccLabels(std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<long int>> &sccNodes);
@@ -272,6 +339,7 @@ public:
     bool query(long int v1, long int v2);
     void deleteEdges(std::vector<Edge> &decrement);
     void insertEdges(std::vector<Edge> &increament);
+    int getNumberOfSCCs() { return scc_tree_nodes[0].contains.size(); }
     void endAll();
 
     MaintainSCC(long int n, std::vector<Edge> &edges);

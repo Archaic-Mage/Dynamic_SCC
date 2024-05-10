@@ -69,10 +69,25 @@ int main(int argc, char *argv[])
 
   if (world.rank() == 0)
   {
-    int updates, q;
+    for(int i = 0; i<7; i++) {
+      std::string tmp;
+      getline(std::cin, tmp);
+    }
     getGraph(edges, n);
-    getUpdates(updates, decrement, increament);
-    getQueries(q, queries);
+    // int updates;
+    // getUpdates(updates, decrement, increament);
+    // int q;
+    // getQueries(q, queries);
+    float ratio = 0.01;
+    int m = edges.size();
+    int updates = m * ratio;
+    srand(time(0));
+    for(int i = 0; i<updates; i++) {
+      int k = rand() % m;
+      decrement.push_back(edges[k]);
+      std::swap(edges[k], edges[m-1]);
+      m--;
+    }
   }
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -84,13 +99,13 @@ int main(int argc, char *argv[])
 
   start = std::chrono::high_resolution_clock::now();  
   scc.deleteEdges(decrement);
-  scc.insertEdges(increament);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
   if (world.rank() == 0)
     std::cout << "Time taken for updates: " << elapsed.count() << "s\n";
 
   if (world.rank() == 0) {
+    std::cout << "Number of SCCs: " << scc.getNumberOfSCCs() << std::endl;
     std::ofstream out("output.txt");
     for (auto query : queries)
     {

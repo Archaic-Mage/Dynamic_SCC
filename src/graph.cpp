@@ -226,13 +226,15 @@ void MaintainSCC::splitGraphOnNode(std::vector<Edge> &edges, long int node)
 }
 
 // Divide edges by groups based on SCCs (O(mlog(n)))
-void MaintainSCC::divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<Edge>> &sccEdges)
+void MaintainSCC::divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<Edge>> &sccEdges, std::vector<Edge> &inter_scc_edges, bool split = false)
 {
     for (auto &edge : edges)
     {
         if (sccs[edge.from] == sccs[edge.to])
         {
             sccEdges[sccs[edge.from]].push_back(edge);
+        } else if(split) {
+            inter_scc_edges.push_back(edge);
         }
     }
 }
@@ -240,8 +242,11 @@ void MaintainSCC::divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<
 /*** Functions to make SCC Tree ***/
 void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &currentNode)
 {
-    // dPrint("Current Node: " + std::to_string(currentNode.label));
+    
+    // O(m)
     splitGraphOnNode(edge, edge[0].from);
+
+    // O(m + n)
     // actual node -> temp label
     std::unordered_map<long int, long int> sccs;
     for(auto &[from, to] : edge) {
@@ -249,50 +254,40 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
         sccs[to] = to;
     }
     findScc(edge, sccs);
+
+    // O(m)
     // temp label -> edges in scc
     std::unordered_map<long int, std::vector<Edge>> sccEdges;
-    divideEdgesByScc(edge, sccs, sccEdges);
-    // temp label -> label
-    std::unordered_map<long int, long int> label_mapping;
-    for (auto &scc : sccEdges)
-    {
-        label_mapping[scc.first] = getLabel();
-    }
-    // changing sccs mappings to labels
+    std::vector<Edge> temp;
+    divideEdgesByScc(edge, sccs, sccEdges, temp);
+
+    // O(n)
+    std::unordered_map<long int, std::vector<long int>> sccNodes;
     for (auto &scc : sccs)
     {
-        int temp_label = scc.second;
-        if (label_mapping.find(temp_label) != label_mapping.end())
-        {
-            scc.second = label_mapping[temp_label];
-        }
-        else
-        {
-            scc.second = scc.first;
-            label_mapping[temp_label] = scc.first;
-        }
+        sccNodes[scc.second].push_back(scc.first);
     }
-    currentNode.condenseFill(edge, sccs);
-    // dPrint("Condensed Fill");
-    // for(auto& scc: currentNode.corresponds_to) {
-    //   dEdge(scc.second);
-    // }
-    // dPrint("Creating Child Nodes");
-    for (auto &scc : label_mapping)
+
+    // O(n)
+    // changing sccs mappings to labels
+    for (auto &node : sccNodes)
     {
-        // we don't create a node for the split node
-        if (scc.second == -edge[0].from)
-            continue;
-        TreeNode &child = scc_tree_nodes[scc.second];
-        child.label = scc.second;
+        bool single_node = (node.second.size() == 1);
+        int label = single_node ? node.second[0] : getLabel();
+        for(auto &nd: node.second)
+            sccs[nd] = label;
+        if(label == -edge[0].from) continue;
+        TreeNode &child = scc_tree_nodes[label];
+        child.label = label;
         child.parent = currentNode.label;
         child.dept = currentNode.dept + 1;
         currentNode.contains.insert(child.label);
-        if (sccEdges.find(scc.first) != sccEdges.end())
-        {
-            makeSccTreeInternals(sccEdges[scc.first], child);
-        }
+        if (!single_node)
+            makeSccTreeInternals(sccEdges[node.first], child);
     }
+
+    // O(m)
+    currentNode.condenseFill(edge, sccs);
 }
 
 // Construct the SCC tree
@@ -707,17 +702,13 @@ void MaintainSCC::processMessage()
             world.recv(0, 2, nodes);
             world.recv(0, 3, edgeList);
             makeSccTree(edgeList, nodes);
-            for (auto &root : roots)
-            {
-                dSccTree(root, scc_tree_nodes);
-            }
         }
         else if (type == MessageType::EDGE_DELETE)
         {
             Edge edge;
             world.recv(0, 1, edge);
             deleteEdge(edge);
-            std::cout << "Deleted Edge: " << edge.from << " " << edge.to << std::endl;
+            // std::cout << "Deleted Edge: " << edge.from << " " << edge.to << std::endl;
         }
         else if (type == MessageType::CLR_DEC_CACHE)
         {
@@ -767,12 +758,18 @@ MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
     if (world_rank == 0)
     {
         SCC_LABEL = n + 1;
+        sccs.reserve(n+1);
         for (long int i = 1; i <= n; i++)
             sccs[i] = i;
         findScc(edges, sccs);
 
+        std::cout << "Done FIND SCC\n" << std::endl;
+
         std::unordered_map<long int, std::vector<Edge>> sccEdges;
-        divideEdgesByScc(edges, sccs, sccEdges);
+        std::vector<Edge> inter_scc_edges;
+        divideEdgesByScc(edges, sccs, sccEdges, inter_scc_edges, true);
+
+        std::cout << "Done DIVIDE EDGES\n" << std::endl;
 
         std::unordered_map<long int, std::vector<long int>> sccNodes;
         for (auto &scc : sccs)
@@ -781,18 +778,34 @@ MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
             which_rank[scc.first] = scc.second % (world.size() - 1) + 1;
         }
 
-        for (auto &scc_edges : sccEdges)
-        {
-            std::vector<long int> &nodes = sccNodes[scc_edges.first];
-            int to_rank = which_rank[nodes[0]];
+        std::cout << "Done DIVIDE NODES\n" << std::endl;
+
+        std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
+        std::cout << "Set of Edge: " << sccEdges.size() << std::endl;
+
+
+        for(auto &scc_node: sccNodes) {
+            int to_rank = which_rank[scc_node.second[0]];
             world.send(to_rank, 0, MessageType::SCC_TREE);
             world.send(to_rank, 1, SCC_LABEL + to_rank);
-            world.send(to_rank, 2, nodes);
-            world.send(to_rank, 3, scc_edges.second);
+            world.send(to_rank, 2, scc_node.second);
+            world.send(to_rank, 3, sccEdges[scc_node.first]);
         }
+
+        // for (auto &scc_edges : sccEdges)
+        // {
+        //     std::vector<long int> &nodes = sccNodes[scc_edges.first];
+        //     int to_rank = which_rank[nodes[0]];
+        //     world.send(to_rank, 0, MessageType::SCC_TREE);
+        //     world.send(to_rank, 1, SCC_LABEL + to_rank);
+        //     world.send(to_rank, 2, nodes);
+        //     world.send(to_rank, 3, scc_edges.second);
+        // }
 
         changeSccLabels(sccs, sccNodes);
         constructMasterNode(edges, sccs);
+
+        std::cout << "Done CONSTRUCT MASTER NODE\n" << std::endl;
     }
     else
         processMessage();

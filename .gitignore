@@ -1,7 +1,7 @@
 /.vscode
 /build
 
-/tests/input/i3.txt
+/tests
 
 # Ignore build files for latex
 *.aux
@@ -21,3 +21,5 @@
 *.lot
 *.synctex.gz
 *.toc
+*.alg
+*.gls
