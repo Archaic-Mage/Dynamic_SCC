@@ -1,4 +1,4 @@
-Running tests at Fri 10 May 2024 04:22:16 PM IST
+Running tests at Fri 10 May 2024 10:45:35 PM IST
 --------------------------------
 example_c1.txt
 Done FIND SCC
@@ -11,9 +11,9 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000170044s
-Time taken for updates: 0.000222079s
-Number of SCCs: 4
+Time taken for initialisation: 0.000197068s
+Time taken for updates: 0.000185608s
+Number of SCCs: 3
 Test example_c1.txt passed
 --------------------------------
 --------------------------------
@@ -28,8 +28,8 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.00016275s
-Time taken for updates: 0.000145749s
+Time taken for initialisation: 0.000164228s
+Time taken for updates: 0.00015388s
 Number of SCCs: 1
 Test example_c2.txt passed
 --------------------------------
@@ -45,9 +45,9 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000140689s
-Time taken for updates: 0.000182436s
-Number of SCCs: 2
+Time taken for initialisation: 0.000200305s
+Time taken for updates: 0.000153179s
+Number of SCCs: 1
 Test example_c3.txt passed
 --------------------------------
 --------------------------------
@@ -62,9 +62,9 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000153112s
-Time taken for updates: 0.000253607s
-Number of SCCs: 3
+Time taken for initialisation: 0.000203019s
+Time taken for updates: 0.00023655s
+Number of SCCs: 4
 Test example_c4.txt passed
 --------------------------------
 --------------------------------
@@ -79,9 +79,9 @@ Number of SCCs: 4
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000192825s
-Time taken for updates: 9.9474e-05s
-Number of SCCs: 7
+Time taken for initialisation: 0.000215643s
+Time taken for updates: 7.1601e-05s
+Number of SCCs: 6
 Test four_to_one.txt failed
 --------------------------------
 --------------------------------
@@ -96,8 +96,8 @@ Number of SCCs: 2
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000207143s
-Time taken for updates: 0.000439942s
+Time taken for initialisation: 0.000260334s
+Time taken for updates: 0.000226412s
 Number of SCCs: 2
 Test g1_od.txt passed
 --------------------------------
@@ -113,9 +113,9 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000186224s
-Time taken for updates: 0.000434201s
-Number of SCCs: 2
+Time taken for initialisation: 0.000260334s
+Time taken for updates: 0.000350768s
+Number of SCCs: 1
 Test g2_od.txt passed
 --------------------------------
 --------------------------------
@@ -130,9 +130,9 @@ Number of SCCs: 2
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000284374s
-Time taken for updates: 0.00132532s
-Number of SCCs: 5
+Time taken for initialisation: 0.000279358s
+Time taken for updates: 0.000994209s
+Number of SCCs: 4
 Test g3_od.txt passed
 --------------------------------
 --------------------------------
@@ -147,8 +147,8 @@ Number of SCCs: 2
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000459378s
-Time taken for updates: 0.00109833s
+Time taken for initialisation: 0.00039027s
+Time taken for updates: 0.000934811s
 Number of SCCs: 6
 Test g4_od.txt passed
 --------------------------------
@@ -164,8 +164,8 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000134589s
-Time taken for updates: 0.000114301s
+Time taken for initialisation: 0.000197409s
+Time taken for updates: 0.000160152s
 Number of SCCs: 1
 Test one_scc_nu.txt passed
 --------------------------------
@@ -181,8 +181,8 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000178719s
-Time taken for updates: 0.00018998s
+Time taken for initialisation: 0.000185798s
+Time taken for updates: 0.000188544s
 Number of SCCs: 4
 Test one_scc_od.txt passed
 --------------------------------
@@ -198,8 +198,8 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000157671s
-Time taken for updates: 0.000122426s
+Time taken for initialisation: 0.000188082s
+Time taken for updates: 0.000149422s
 Number of SCCs: 1
 Test one_scc_oi.txt passed
 --------------------------------
@@ -215,8 +215,8 @@ Number of SCCs: 1
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000163762s
-Time taken for updates: 0.000194469s
+Time taken for initialisation: 0.000151166s
+Time taken for updates: 0.000201607s
 Number of SCCs: 7
 Test one_scc_rr.txt failed
 --------------------------------
@@ -232,9 +232,9 @@ Number of SCCs: 2
 Set of Edge: 1
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000145118s
-Time taken for updates: 0.000132585s
-Number of SCCs: 7
+Time taken for initialisation: 0.000187632s
+Time taken for updates: 0.000174278s
+Number of SCCs: 6
 Test one_to_four.txt failed
 --------------------------------
 --------------------------------
@@ -249,8 +249,8 @@ Number of SCCs: 2
 Set of Edge: 2
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000148003s
-Time taken for updates: 0.00012444s
+Time taken for initialisation: 0.000177032s
+Time taken for updates: 0.000135587s
 Number of SCCs: 2
 Test two_scc_nu.txt passed
 --------------------------------
@@ -266,8 +266,8 @@ Number of SCCs: 2
 Set of Edge: 2
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000162319s
-Time taken for updates: 0.000152752s
+Time taken for initialisation: 0.000197419s
+Time taken for updates: 0.000172895s
 Number of SCCs: 4
 Test two_scc_od.txt passed
 --------------------------------
@@ -283,8 +283,8 @@ Number of SCCs: 2
 Set of Edge: 2
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000155377s
-Time taken for updates: 0.000116565s
+Time taken for initialisation: 0.000194865s
+Time taken for updates: 0.000152808s
 Number of SCCs: 2
 Test two_scc_oi.txt failed
 --------------------------------
@@ -300,8 +300,8 @@ Number of SCCs: 2
 Set of Edge: 2
 Done CONSTRUCT MASTER NODE
 
-Time taken for initialisation: 0.000198586s
-Time taken for updates: 0.000139397s
-Number of SCCs: 8
+Time taken for initialisation: 0.000190167s
+Time taken for updates: 0.000182963s
+Number of SCCs: 7
 Test two_scc_rr.txt failed
 --------------------------------

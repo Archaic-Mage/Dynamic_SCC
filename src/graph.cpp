@@ -94,14 +94,8 @@ void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long i
 
 void TreeNode::removeEdge(const Edge &edge)
 {
-    for (auto it = this->corresponds_to.begin(); it != this->corresponds_to.end(); it++)
-    {
-        if (it->first == edge)
-        {
-            this->corresponds_to.erase(it);
-            break;
-        }
-    }
+    //erase using key
+    corresponds_to.erase(edge);
 }
 
 void TreeNode::condenseFill(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs)
@@ -116,7 +110,8 @@ void TreeNode::condenseFill(std::vector<Edge> &edges, std::unordered_map<long in
             // removing the split node
             if (edge.to < 0)
                 edge.to = -edge.to;
-            corresponds_to.emplace_back(std::make_pair(edge, e));
+            corresponds_to[edge] = e;
+            // corresponds_to.emplace_back(std::make_pair(edge, e));
         }
     }
 }
@@ -157,7 +152,7 @@ void TreeNode::updateLabels(std::unordered_map<long int, long int> &new_labels)
     for (auto &correspond_to : corresponds_to)
     {
         Edge &label_edge = correspond_to.second;
-        Edge &actual_edge = correspond_to.first;
+        const Edge &actual_edge = correspond_to.first;
 
         if ( new_labels.find ( actual_edge.from ) != new_labels.end() )
             label_edge.from = new_labels[actual_edge.from];
@@ -168,11 +163,11 @@ void TreeNode::updateLabels(std::unordered_map<long int, long int> &new_labels)
 
 void TreeNode::exposeToParent(TreeNode &parent, std::unordered_set<long int> unreachable)
 {
-    std::vector<std::pair<Edge, Edge>> temp;
-    while (!corresponds_to.empty())
+    std::unordered_map<Edge, Edge, EdgeHash> temp;
+    for(auto &correspond_to: corresponds_to)
     {
-        std::pair<Edge, Edge> &correspond_to = corresponds_to.back();
-        corresponds_to.pop_back();
+        // std::pair<Edge, Edge> &correspond_to = corresponds_to.back();
+        // corresponds_to.pop_back();
         if (unreachable.find(correspond_to.second.from) != unreachable.end() || unreachable.find(correspond_to.second.to) != unreachable.end())
         {
             if (unreachable.find(correspond_to.second.from) == unreachable.end())
@@ -183,14 +178,14 @@ void TreeNode::exposeToParent(TreeNode &parent, std::unordered_set<long int> unr
             {
                 correspond_to.second.to = label;
             }
-            parent.corresponds_to.push_back(correspond_to);
+            parent.corresponds_to[correspond_to.first] = correspond_to.second;
         }
         else
         {
-            temp.push_back(correspond_to);
+            temp[correspond_to.first] = correspond_to.second;
         }
     }
-    corresponds_to = temp;
+    corresponds_to.swap(temp);
 }
 
 // traverse the Node and all the containing nodes
@@ -242,9 +237,32 @@ void MaintainSCC::divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<
 /*** Functions to make SCC Tree ***/
 void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &currentNode)
 {
-    
+
+    // std::cout << "Current Node: " << currentNode.label << std::endl;
+
+    scc_tree_labels[currentNode.label] = currentNode.label;
+
+    //get split on vertex (we choose vertex with highest degree (total))
+    long int split_on = -1;
+    std::unordered_map<long int, int> degree;
     // O(m)
-    splitGraphOnNode(edge, edge[0].from);
+    for (auto &e : edge)
+    {
+        degree[e.from]++;
+        degree[e.to]++;
+    }
+    int max_degree = -1;
+    for (auto &d : degree)
+    {
+        if (d.second > max_degree)
+        {
+            max_degree = d.second;
+            split_on = d.first;
+        }
+    }
+
+    // O(m)
+    splitGraphOnNode(edge, split_on);
 
     // O(m + n)
     // actual node -> temp label
@@ -253,6 +271,18 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
         sccs[from] = from;
         sccs[to] = to;
     }
+
+    // Optimizing timing by reducing the depts (capping at MAX_DEPT)
+    int next_dept = currentNode.dept + 1;
+    if( next_dept > MAX_DEPT ) {
+        for(auto &node: sccs) {
+            if(node.first == -split_on) continue;
+            scc_tree_labels[node.first] = currentNode.label;
+        }
+        currentNode.condenseFill(edge, sccs);
+        return;
+    }
+
     findScc(edge, sccs);
 
     // O(m)
@@ -276,7 +306,7 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
         int label = single_node ? node.second[0] : getLabel();
         for(auto &nd: node.second)
             sccs[nd] = label;
-        if(label == -edge[0].from) continue;
+        if(label == -split_on) continue;
         TreeNode &child = scc_tree_nodes[label];
         child.label = label;
         child.parent = currentNode.label;
@@ -284,6 +314,8 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
         currentNode.contains.insert(child.label);
         if (!single_node)
             makeSccTreeInternals(sccEdges[node.first], child);
+        else
+            scc_tree_labels[node.second[0]] = label;
     }
 
     // O(m)
@@ -347,7 +379,8 @@ void MaintainSCC::constructMasterNode(std::vector<Edge> &edges, std::unordered_m
             Edge e;
             e.from = sccs[edge.from];
             e.to = sccs[edge.to];
-            root.corresponds_to.emplace_back(std::make_pair(edge, e));
+            root.corresponds_to[edge] = e;
+            // root.corresponds_to.emplace_back(std::make_pair(edge, e));
         }
     }
     for (auto &scc : sccs)
@@ -363,7 +396,7 @@ void MaintainSCC::updateMasterNode(int type, std::vector<Edge> &edges, std::unor
     {
         for (auto &correspond_to : scc_tree_nodes[0].corresponds_to)
         {
-            Edge &actual_edge = correspond_to.first;
+            const Edge &actual_edge = correspond_to.first;
             Edge &label_edge = correspond_to.second;
             long int from = actual_edge.from;
             if (sccs.find(from) != sccs.end())
@@ -383,7 +416,8 @@ void MaintainSCC::updateMasterNode(int type, std::vector<Edge> &edges, std::unor
                 Edge e;
                 e.from = sccs[edge.from];
                 e.to = sccs[edge.to];
-                scc_tree_nodes[0].corresponds_to.emplace_back(std::make_pair(edge, e));
+                scc_tree_nodes[0].corresponds_to[edge] = e;
+                // scc_tree_nodes[0].corresponds_to.emplace_back(std::make_pair(edge, e));
             }
         }
         for (auto &scc : sccs)
@@ -398,15 +432,16 @@ int MaintainSCC::checkAndRemoveUnreachable(TreeNode &curr_node)
     // do unreachability and reachability checks
     std::unordered_set<long int> unreachable;
     curr_node.checkUnreachable(unreachable);
+
     // if no unreachable nodes then return
     if (unreachable.empty())
-    {
         return 0;
-    }
+
     for (auto &node : unreachable)
     {
         dPrint("Unreachable: " + std::to_string(node));
     }
+
     // remove all unreachable nodes from the current node
     for (auto &unreachable_node : unreachable)
     {
@@ -511,8 +546,10 @@ int MaintainSCC::getLCANode(int node1, int node2)
 
 // DELETE EDGE
 void MaintainSCC::deleteEdge(Edge edge)
-{
-    TreeNode &lca = scc_tree_nodes.at(getLCANode(edge.from, edge.to));
+{   
+    long int from = scc_tree_labels[edge.from];
+    long int to = scc_tree_labels[edge.to];
+    TreeNode &lca = scc_tree_nodes.at(getLCANode(from, to));
     // delete the edge from the lca
     lca.removeEdge(edge);
     // add the lca to the delete cache
@@ -536,9 +573,9 @@ void MaintainSCC::insertEdgesInMaster(std::vector< Edge > &edges)
 {
     TreeNode &root = scc_tree_nodes[0];
     for(auto &edge : edges) {
-        std::cout << "Inserting Edge: " << edge.from << " " << edge.to << std::endl;
         Edge label_edge(sccs[edge.from], sccs[edge.to]);
-        root.corresponds_to.emplace_back(std::make_pair(edge, label_edge));
+        root.corresponds_to[edge] = label_edge;
+        // root.corresponds_to.emplace_back(std::make_pair(edge, label_edge));
     }
     edges.clear();
     // filling the edges for computing sccs
@@ -556,20 +593,20 @@ void MaintainSCC::insertEdgesInMaster(std::vector< Edge > &edges)
         sccNodes[scc.second].push_back(scc.first);
     std::unordered_map<long int, long int> actual_node;
     //dividing the edges based on the new sccs formed (restrucring the root master node)
-    std::unordered_map<long int, std::vector<std::pair<Edge, Edge>>> new_scc_root;
-    std::vector<std::pair<Edge, Edge>> temp;
-    while(!root.corresponds_to.empty()) {
-        std::pair<Edge, Edge> &correspond_to = root.corresponds_to.back();
-        root.corresponds_to.pop_back();
+    std::unordered_map<long int, std::vector<std::pair<const Edge, Edge>>> new_scc_root;
+    std::unordered_map<Edge, Edge, EdgeHash> temp;
+    for(auto &correspond_to: root.corresponds_to) {
+        // std::pair<Edge, Edge> &correspond_to = root.corresponds_to.end();
+        // root.corresponds_to.pop_back();
         actual_node[correspond_to.second.from] = correspond_to.first.from;
         actual_node[correspond_to.second.to] = correspond_to.first.to;
         if(sccs[correspond_to.second.from] == sccs[correspond_to.second.to]) {
             new_scc_root[sccs[correspond_to.second.from]].emplace_back(correspond_to);
         } else {
-            temp.emplace_back(correspond_to);
+            temp.emplace_hint(temp.end(), correspond_to.first, correspond_to.second);
         }
     }
-    root.corresponds_to = temp;
+    root.corresponds_to.swap(temp);
 }
 
 // INSERT EDGE
@@ -588,7 +625,7 @@ void MaintainSCC::insertEdge(Edge edge)
     }
     Edge e(label_from, label_to);
     // add the edge to the lca
-    lca.corresponds_to.emplace_back(std::make_pair(edge, e));
+    lca.corresponds_to[edge] = e;
     // add the lca to the insert cache
     insert_cache.insert({lca.dept, lca.label});
 }
@@ -639,27 +676,27 @@ void MaintainSCC::clearInsertCache(TreeNode &node)
         }
     }
 
-    std::vector<std::pair<Edge, Edge>> temp;
-    while (!node.corresponds_to.empty())
+    std::unordered_map<Edge, Edge, EdgeHash> temp;
+    for(auto &correspond_to: node.corresponds_to)
     {
-        std::pair<Edge, Edge> &correspond_to = node.corresponds_to.back();
-        node.corresponds_to.pop_back();
+        // std::pair<Edge, Edge> &correspond_to = node.corresponds_to.back();
+        // node.corresponds_to.pop_back();
         int scc_label_from = sccs[correspond_to.second.from], scc_label_to = sccs[correspond_to.second.to];
         if (scc_label_from != scc_label_to)
-            temp.emplace_back(correspond_to);
+            temp[correspond_to.first] = correspond_to.second;
         else {
             if(correspond_to.second.to == split_on[scc_label_to])
                 correspond_to.second.to = -correspond_to.second.to;
-            scc_tree_nodes[sccs[correspond_to.second.from]].corresponds_to.emplace_back(correspond_to);
+            scc_tree_nodes[sccs[correspond_to.second.from]].corresponds_to[correspond_to.first] = correspond_to.second;
         }
     }
-    node.corresponds_to = temp;
+    node.corresponds_to.swap(temp);
 
     // changing connections in node
     for (auto &correspond_to : node.corresponds_to)
     {
         Edge &label_edge = correspond_to.second;
-        Edge &actual_edge = correspond_to.first;
+        const Edge &actual_edge = correspond_to.first;
         label_edge.from = sccs[label_edge.from];
         label_edge.to = sccs[label_edge.to];
     }
@@ -708,13 +745,12 @@ void MaintainSCC::processMessage()
             Edge edge;
             world.recv(0, 1, edge);
             deleteEdge(edge);
-            // std::cout << "Deleted Edge: " << edge.from << " " << edge.to << std::endl;
         }
         else if (type == MessageType::CLR_DEC_CACHE)
         {
+            std::cout << "Clearing Delete Cache : " << world.rank() << std::endl;
             while (!delete_cache.empty())
             {
-                dInfo(world, "Deleting Cache");
                 Cache c = *delete_cache.begin();
                 delete_cache.erase(delete_cache.begin());
                 TreeNode &node = scc_tree_nodes.at(c.label);
@@ -725,6 +761,7 @@ void MaintainSCC::processMessage()
                 }
             }
             world.send(0, 0, STATUS::DONE_NO_NEW);
+            std::cout << "Cleared Delete Cache : " << world.rank() << std::endl;
         }
         else if (type == MessageType::EDGE_INSERT)
         {
@@ -791,16 +828,6 @@ MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
             world.send(to_rank, 2, scc_node.second);
             world.send(to_rank, 3, sccEdges[scc_node.first]);
         }
-
-        // for (auto &scc_edges : sccEdges)
-        // {
-        //     std::vector<long int> &nodes = sccNodes[scc_edges.first];
-        //     int to_rank = which_rank[nodes[0]];
-        //     world.send(to_rank, 0, MessageType::SCC_TREE);
-        //     world.send(to_rank, 1, SCC_LABEL + to_rank);
-        //     world.send(to_rank, 2, nodes);
-        //     world.send(to_rank, 3, scc_edges.second);
-        // }
 
         changeSccLabels(sccs, sccNodes);
         constructMasterNode(edges, sccs);

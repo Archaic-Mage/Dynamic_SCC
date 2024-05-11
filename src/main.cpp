@@ -49,6 +49,7 @@ void getQueries(int &q, std::vector<std::pair<long int, long int>> &queries)
   }
 }
 
+namespace mt = boost::mpi::threading;
 
 int main(int argc, char *argv[])
 {
@@ -58,8 +59,15 @@ int main(int argc, char *argv[])
   std::cout.tie(NULL);
 
   // setting up mpi (boost)
-  boost::mpi::environment env(argc, argv);
+  boost::mpi::environment env(argc, argv, mt::funneled);
   boost::mpi::communicator world;
+
+  if(env.thread_level() < mt::funneled) {
+    if(world.rank() == 0) {
+      std::cerr << "This program requires MPI_THREAD_FUNNELED support from MPI. Exiting..." << std::endl;
+    }
+    return 1;
+  }
 
   long int n;
   std::vector<SCC::Edge> edges;
@@ -69,7 +77,7 @@ int main(int argc, char *argv[])
 
   if (world.rank() == 0)
   {
-    for(int i = 0; i<7; i++) {
+    for(int i = 0; i<4; i++) {
       std::string tmp;
       getline(std::cin, tmp);
     }

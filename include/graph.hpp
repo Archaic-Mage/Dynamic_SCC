@@ -2,11 +2,13 @@
 #include <map>
 #include <set>
 #include <stack>
-#include <vector>
 #include <queue>
+#include <thread>
+#include <vector>
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <boost/functional/hash.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/unordered_map.hpp>
@@ -78,6 +80,15 @@ public:
     }
 };
 
+struct EdgeHash {
+    std::size_t operator()(const Edge& edge) const {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, edge.from);
+        boost::hash_combine(seed, edge.to);
+        return seed;
+    }
+};
+
 /**
  * @brief This function is used to find the strongly connected components in the graph
  * 
@@ -114,7 +125,7 @@ public:
      * relationship.
      * 
      */
-    std::vector<std::pair<Edge, Edge>>  corresponds_to;
+    std::unordered_map<Edge, Edge, EdgeHash>      corresponds_to;
     /**
      * @brief contains the nodes which are part of the current node in the SCC tree.
      * They store the label of the child nodes and is used to travese the tree downwards
@@ -284,11 +295,13 @@ public:
 
 class MaintainSCC {
 
-    long int                                SCC_LABEL = 0;
     const long int                          MOD = 1e10;
+    const int                               MAX_DEPT = 2;
+    long int                                SCC_LABEL = 0;
     int                                     world_size;
     std::vector<long int>                   roots;
     std::unordered_map<long int, TreeNode>  scc_tree_nodes;
+    std::unordered_map<long int, long int>  scc_tree_labels;
     std::set<Cache, DecCache>               delete_cache;
     std::set<Cache, IncCache>               insert_cache;
     std::unordered_map<long int, int>       which_rank;
