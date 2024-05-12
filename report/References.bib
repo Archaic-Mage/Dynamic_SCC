@@ -1,10 +1,4 @@
 %References.bib
-@article{Example_Reference,
-   title={A paper to reference},
-   url={http://www.examplewebsite.org},
-   journal={Journal X},
-   author={Author 1 and Author 2},
-   year={2024}}
 
 @article{scc_tree_reference,
    title={Improved deterministic algorithms for decremental reachability and strongly connected components},
@@ -55,3 +49,245 @@ title = {Formally-Proven Kosaraju's algorithm}
   pages={431-437},
   keywords={C++ languages;Java;Time complexity;Computer aided software engineering;Software systems;Software algorithms;Data structures;control flow graph (CFG);depth first search tree (DFS);directed acyclic graphs (DAGs);directed graph (digraph);software dependability;strongly connected components (SCCs)},
   doi={10.1109/DASC-PICom-DataCom-CyberSciTec.2017.85}}
+
+@article{Cheriyan1996AlgorithmsFD,
+  title={Algorithms for dense graphs and networks on the random access computer},
+  author={Joseph Cheriyan and Kurt Mehlhorn},
+  journal={Algorithmica},
+  year={1996},
+  volume={15},
+  pages={521-549},
+  url={https://api.semanticscholar.org/CorpusID:8930091}
+}
+
+@article{dfs_inherently_sequential,
+title = {Depth-first search is inherently sequential},
+journal = {Information Processing Letters},
+volume = {20},
+number = {5},
+pages = {229-234},
+year = {1985},
+issn = {0020-0190},
+doi = {https://doi.org/10.1016/0020-0190(85)90024-9},
+url = {https://www.sciencedirect.com/science/article/pii/0020019085900249},
+author = {John H. Reif},
+keywords = {Depth-first search, parallel computation, polynomial time complete},
+abstract = {This paper concerns the computational complexity of depth-first search. Suppose we are given a rooted graph G with fixed adjacency lists and vertices u, v. We wish to test if u is first visited before v in depth-first search order of G. We show that this problem, for undirected and directed graphs, is complete in deterministic polynomial time with respect to deterministic log-space reductions. This gives strong evidence that depth-first search ordering can be done neither in deterministic space (log n)c nor in parallel time (log n)c, for any constant c > 0.}
+}
+
+
+
+
+
+
+
+@article{tarjan1972depth,
+author = {Tarjan, Robert},
+title = {Depth-First Search and Linear Graph Algorithms},
+journal = {SIAM Journal on Computing},
+volume = {1},
+number = {2},
+pages = {146-160},
+year = {1972},
+doi = {10.1137/0201010},
+
+URL = { 
+    
+        https://doi.org/10.1137/0201010
+    
+    
+
+},
+eprint = { 
+    
+        https://doi.org/10.1137/0201010
+    
+    
+
+}
+,
+    abstract = { The value of depth-first search or “backtracking” as a technique for solving problems is illustrated by two examples. An improved version of an algorithm for finding the strongly connected components of a directed graph and at algorithm for finding the biconnected components of an undirect graph are presented. The space and time requirements of both algorithms are bounded by \$k\_1 V + k\_2 E + k\_3 \$ for some constants \$k\_1 ,k\_2 \$, and \$k\_3 \$, where V is the number of vertices and E is the number of edges of the graph being examined. }
+}
+
+@InProceedings{imp_parallel_dfs,
+author="Kao, Ming-Yang
+and Teng, Shang-Hua
+and Toyama, Kentaro",
+editor="Dehne, Frank
+and Sack, J{\"o}rg-R{\"u}diger
+and Santoro, Nicola
+and Whitesides, Sue",
+title="Improved parallel depth-first search in undirected planar graphs",
+booktitle="Algorithms and Data Structures",
+year="1993",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="409--420",
+abstract="We present an improved parallel algorithm for constructing a depth-first search tree in a connected undirected planar graph. The algorithm runs in O(log2n) time with n/log n processors for an n-vertex graph. It hinges on the use of a new optimal algorithm for computing a cycle separator of an embedded planar graph in O(log n) time with n/log n processors. The best previous algorithms for computing depth-first search trees and cycle separators achieved the same time complexities, but with n processors. Our algorithms run on a parallel random access machine that permits concurrent reads and concurrent writes in its shared memory and allows an arbitrary processor to succeed in case of a write conflict.",
+isbn="978-3-540-47918-5"
+}
+
+@article{anderson1988random,
+  title={A random NC algorithm for depth first search},
+  author={Anderson, RJ and Aggarwal, A},
+  journal={Combinatorica},
+  volume={8},
+  pages={1--12},
+  year={1988}
+}
+
+@article{doi:10.1137/0219025,
+author = {Aggarwal, Alok and Anderson, Richard J. and Kao, Ming-Yang},
+title = {Parallel Depth-First Search in General Directed Graphs},
+journal = {SIAM Journal on Computing},
+volume = {19},
+number = {2},
+pages = {397-409},
+year = {1990},
+doi = {10.1137/0219025},
+
+URL = { 
+    
+        https://doi.org/10.1137/0219025
+    
+    
+
+},
+eprint = { 
+    
+        https://doi.org/10.1137/0219025
+    
+    
+
+}
+,
+    abstract = { A directed cycle separator of an n-vertex directed graph is a vertex-simple directed cycle such that when the vertices of the cycle are deleted, the resulting graph has no strongly connected component with more than \${n / 2}\$ vertices. It is shown that the problem of finding a directed cycle separator is in randomized NC. It is also proved that computing cycle separators and conducting depth-first search in directed graphs are deterministically NC-equivalent. These two results together yield the first randomized NC algorithm for depth-first search in general directed graphs. }
+}
+
+@article{GaMi88,
+     Author="Hillel Gazit and Gary L. Miller",
+     Title="An Improved Parallel Algorithm that Computes the {BFS}
+              Numbering of a Directed Graph",
+     Journal="Information Processing Letters",
+     year="1988",
+     Pages="61--65",
+     Month="June",
+     Volume="28",
+     Number="2",
+     bib2html_rescat = {Parallel Algorithms,Graph Algorithms},  
+     misc="Submitted 2-23-88.  Accepted 3-3-88.  Sent copyright
+               transfer and request for 100 reprints 3-15-88.",
+     thanks="NSF DCR-8514961"}
+
+
+@article{4c34febb0a66409c8c7877404792c105,
+title = "Faster optimal parallel prefix sums and list ranking",
+abstract = "We present a parallel algorithm for the prefix sums problem which runs in time O( log n log log n) using n log log n log n processors (optimal speedup). This algorithm leads to a parallel list ranking algorithm which runs in O(log n) time using n log n processors (optimal speedup).",
+author = "Richard Cole and Uzi Vishkin",
+year = "1989",
+month = jun,
+doi = "10.1016/0890-5401(89)90036-9",
+language = "English (US)",
+volume = "81",
+pages = "334--352",
+journal = "Information and Computation",
+issn = "0890-5401",
+publisher = "Elsevier Inc.",
+number = "3",
+}
+
+
+@InProceedings{10.1007/3-540-45591-4_68,
+author="Fleischer, Lisa K.
+and Hendrickson, Bruce
+and P{\i}nar, Ali",
+editor="Rolim, Jos{\'e}",
+title="On Identifying Strongly Connected Components in Parallel",
+booktitle="Parallel and Distributed Processing",
+year="2000",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="505--511",
+abstract="The standard serial algorithm for strongly connected components is based on depth first search, which is difficult to parallelize. We describe a divide-and-conquer algorithm for this problem which has significantly greater potential for parallelization. For a graph with n vertices in which degrees are bounded by a constant, we show the expected serial running time of our algorithm to be O(n log n).",
+isbn="978-3-540-45591-2"
+}
+
+@INPROCEEDINGS{6877288,
+  author={Slota, George M. and Rajamanickam, Sivasankaran and Madduri, Kamesh},
+  booktitle={2014 IEEE 28th International Parallel and Distributed Processing Symposium}, 
+  title={BFS and Coloring-Based Parallel Algorithms for Strongly Connected Components and Related Problems}, 
+  year={2014},
+  volume={},
+  number={},
+  pages={550-559},
+  keywords={Color;Arrays;Image color analysis;Partitioning algorithms;Parallel algorithms;Multicore processing;strongly connected components;BFS;coloring;multicore algorithms;performance analysis},
+  doi={10.1109/IPDPS.2014.64}}
+
+@article{article,
+author = {Orzan, Simona},
+year = {2004},
+month = {01},
+pages = {},
+title = {On Distributed Verification and Verified Distribution}
+}
+
+@article{MCLENDONIII2005901,
+title = {Finding strongly connected components in distributed graphs},
+journal = {Journal of Parallel and Distributed Computing},
+volume = {65},
+number = {8},
+pages = {901-910},
+year = {2005},
+issn = {0743-7315},
+doi = {https://doi.org/10.1016/j.jpdc.2005.03.007},
+url = {https://www.sciencedirect.com/science/article/pii/S0743731505000535},
+author = {William {McLendon III} and Bruce Hendrickson and Steven J. Plimpton and Lawrence Rauchwerger},
+keywords = {Strongly connected components, Graph algorithm, Parallel computing},
+abstract = {The traditional, serial, algorithm for finding the strongly connected components in a graph is based on depth first search and has complexity which is linear in the size of the graph. Depth first search is difficult to parallelize, which creates a need for a different parallel algorithm for this problem. We describe the implementation of a recently proposed parallel algorithm that finds strongly connected components in distributed graphs, and discuss how it is used in a radiation transport solver.}
+}
+
+@article{implementation, 
+title= {Identifying Strongly Connected Components on
+Distributed Networks},
+journal = {DRP Technical Report, University of Oregon, Eugene, OR, USA},
+author = {Sudharshan Srinivasan},
+year = {2021},
+url = {https://www.cs.uoregon.edu/Reports/DRP-202106-Srinivasan.pdf}
+}
+
+@article{article2001,
+author = {Frigioni, Daniele and Marchetti-Spaccamela, Alberto and Nanni, Umberto},
+year = {2001},
+month = {01},
+pages = {287-305},
+title = {Dynamic Algorithms for Classes of Constraint Satisfaction Problems},
+volume = {259},
+journal = {Theoretical Computer Science},
+doi = {10.1016/S0304-3975(00)00013-X}
+}
+
+@article{article2002,
+author = {Roditty, Liam and Zwick, Uri},
+year = {2002},
+month = {09},
+pages = {},
+title = {Improved Dynamic Reachability Algorithms for Directed Graphs},
+volume = {37},
+journal = {SIAM Journal on Computing},
+doi = {10.1137/060650271}
+}
+
+@inproceedings{article2013,
+author = {Roditty, Liam},
+title = {Decremental maintenance of strongly connected components},
+year = {2013},
+isbn = {9781611972511},
+publisher = {Society for Industrial and Applied Mathematics},
+address = {USA},
+abstract = {We consider the problem of maintaining the strongly connected components (SCCs) of an n-nodes and m-edges directed graph that undergoes a sequence of edge deletions. Recently, in SODA 2011, \L{}\k{a}cki presented a deterministic algorithm that preprocess the graph in O(mn) time and creates a data structure that maintains the SCCs of a graph under edge deletions with a total update time of O(mn). The data structure answers strong connectivity queries in O(1) time. The worst case update time after a single edge deletion might be as large as O(mn). In this paper we reduce the preprocessing time and the worst case update time of \L{}\k{a}cki's data structure from O(mn) to O(m log n). The query time and the total update time remain unchanged.},
+booktitle = {Proceedings of the Twenty-Fourth Annual ACM-SIAM Symposium on Discrete Algorithms},
+pages = {1143–1150},
+numpages = {8},
+location = {New Orleans, Louisiana},
+series = {SODA '13}
+}

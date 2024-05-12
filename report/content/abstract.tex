@@ -3,6 +3,8 @@ This report explores the criticality of maintaining strongly connected component
  it becomes very challenging to recompute SCCs in response to changes in the graph structure. This requires efficient algorithms and optimization techniques
  to minimize the computational overhead and ensure real-time updates.
  Building upon prior research, we worked on extending an optimal algorithm tailored for this purpose. 
+ The algorithm maintains the structure of strongly connnected components over sequence of edge updates in $O(mn)$ total time, with constant query time.
+ This is an advancement over the best currently known deterministic algorithms, which run in $O(m^2)$ or $O(n^3)$ total time.
  Each facet of the algorithm deals with various cases of graph updates, which is elucidated with illustrative examples and accompanying pseudo code.
  
 \vspace {1em}
@@ -12,4 +14,3 @@ Leveraging MPI for distributed parallel computation, we implement our algorithm,
  Detailed explanations of the design implementation, including the SCC tree construction, decremental and incremental maintenance, are provided.
  Rigorous testing on standard and specialized graphs, augmented with dynamic updates, is conducted, juxtaposing the performance against static SCC algorithms. 
  Results that are depicted through graphs and tables, are analyzed in the conclusion, offering insights and proposing avenues for future enhancements.
-Additionally, the appendix elucidates the functionality and testing procedures of the implemented library, ensuring comprehensive understanding and usability.

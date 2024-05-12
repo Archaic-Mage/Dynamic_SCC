@@ -1,2 +1,64 @@
 \section{Literature Review} \label{Sec: Literature Review}
-\blindtext
+
+In this section, we review various algorithms and techniques that have been proposed to find strongly connected componenets (SCCs) in a graph.
+We also discuss the work that has been done to indentify SCCs through parallel processing and maintaining SCCs in response to dynamic changes in the graph structure.
+
+\subsection{Static SCC Algorithms} \label{SubSec: Static SCC Algorithms}
+
+The problem of finding SCCs in a graph is a well-studied problem in the field of graph theory.
+In this regards many static alogrithms have been proposed, like the Kosaraju's algorithm \cite{find_scc_algorithm}, Tarjan's algorithm \cite{DBLP:journals/corr/abs-2201-07197}, and the path-based algorithm \cite{Cheriyan1996AlgorithmsFD}.
+These algorithms achieve a time complexity of $O(V+E)$, where $V$ is the number of vertices and $E$ is the number of edges in the graph. 
+
+Kosaraju's algorithm is a two-pass algorithm that traverses the graph twice to find SCCs. In the first pass, it performs a depth-first search (\hyperref[dfs]{DFS}) to create a stack of vertices in order of their finishing times. In the second pass, it reverses the graph and performs DFS again, this time starting from vertices popped from the stack, thus identifying SCCs.
+
+Tarjan's algorithm is a single-pass algorithm based on \hyperref[dfs]{DFS} and uses a depth-first search traversal to identify SCCs. It maintains a stack to keep track of vertices in the current SCC being explored and assigns a unique identifier (low-link value) to each vertex. By maintaining a stack and tracking low-link values, Tarjan's algorithm efficiently identifies SCCs.
+
+Both algorithms have the same time complexity, but their implementations may have different constant factors, making one algorithm more suitable than the other depending on the specific characteristics of the graph being processed. They have linear time complexity in terms of the number of vertices and edges in the graph, making them practical even in large-scale applications.
+
+With the advent of parallel and distributed computing, researchers have explored parallelizing these algorithms to improve their performance on large graphs. Parallel implementations of these algorithms have been proposed using shared-memory parallelism (e.g., OpenMP) and distributed-memory parallelism (e.g., MPI). These parallel implementations aim to exploit the inherent parallelism in the graph traversal process to achieve better performance.
+
+\subsection{Parallel SCC Algorithms} \label{SubSec: Parallel SCC Algorithms}
+
+For large-scale graphs, parallel algorithms are essential to achieve efficient computation of SCCs. 
+Standard static algorithms like Kosaraju's and Tarjan's algorithms are not inherently parallelizable, as they rely significantly on DFS.
+Unfortunately, DFS is inherently sequential, making it challenging to parallelize these algorithms effectively.
+This is observered in a restricted version of lex-BFS (Lexicographic Breadth-First Search), which is $\mathcal{P}$-Complete \cite{dfs_inherently_sequential}.
+However, Aggarwal and Anderson, proposed random NC-alorithm for DFS in \cite[1988]{anderson1988random}, which was later improved to form 
+a parallel DFS in general directed graphs in \cite[1990]{doi:10.1137/0219025}.
+
+The expected time of this latter algorithm is $O(\log^7 n)$, and it requires an impractical $n^{2.376}$ processors.
+Improvements were made to this algorithm in \cite[1993]{imp_parallel_dfs}, which runs the algorithm in $O(\log^2 n)$ time with $O(n/\log n)$ processors for an n-vertex connected undirected planar graph.
+Since, deterministic parallelism of DFS was difficult, various parallel algorithms for finding SCCs were proposed, which avoid the use of dept-first search.
+
+Gazit and Miller devised an NC algorithm for SCC in \cite{GaMi88}, which is based upon matrix-matrix multiplication.
+This algorithm was improved by Cole and Vishkin \cite{4c34febb0a66409c8c7877404792c105}, but still requires $n^{2.376}$ processors and $O(\log^2 n)$ time.
+Lisa K. Fleischer, Bruce Hendrickson, and Ali Pinar in their paper \cite{10.1007/3-540-45591-4_68}, proposed a divide-and-conquer algorithm for strongly connected components based on dept-first search, which has significantly greater potential for parallelization. 
+For a graph with n vertices in which degrees are bounded by a constant, they show the expected serial running time of our algorithm to be O(n log n).
+
+The forward-backward (FW-BW) method \cite{10.1007/3-540-45591-4_68} and Orzan's coloring method \cite{article} are two SCC detection algorithms that are amenable to both shared-memory and distributed-memory implementation.
+These methods use very different subroutines and were proposed in different contexts, FW-BW for graphs arising in scientific computing and coloring in the context of formal verification tool design.
+Developments on this algorithms can be found in the paper \cite{6877288}, by George M. Slota, Sivasankaran Rajamanickam and Kamesh Madduri.
+
+The paper by Sudharshan S. \cite{implementation} provides a detailed implementation of an efficient parallel algorithm for finding SCCs in large-scale graphs on distributed-memory systems.
+It shows how to implement the FW-BW method using the MPI library and provides insights into the challenges and optimizations required to achieve good performance on large-scale graphs.
+The results show performance speedups up to 3.1x and memory reductions up to 2.6x with respect to the serial implementations.
+
+\subsection{Dynamic SCC Algorithms} \label{SubSec: Dynamic SCC Algorithms}
+
+The identification of SCCs in a dynamic graph is a challenging problem due to the changing nature of the graph structure.
+The graph can undergo edge insertions and deletions, which can affect the SCCs in the graph.
+The above mentioned algorithms are designed for static graphs and are not directly applicable to dynamic graphs, thereby necessitating the development of new algorithms for dynamic SCC detection.
+
+The problem of dynamically maintaining SCCs has been given considerable attention only in the recent years, and hence they are addressed less frequently than the static problem.
+One approach to decremental maintenance is to adapt existing algorithms for computing SCCs to handle edge deletions efficiently. Frigioni et al. proposed an algorithm in \cite[2001]{article2001}, which, while providing a solution, had a worst-case time complexity of 
+$O(m^2)$, where m is the number of edges in the graph. This complexity is comparable to recomputing SCCs from scratch after each update, rendering it inefficient for large graphs.
+
+However, there have been advancements in this area. Roditty and Zwick introduced a Las Vegas algorithm in \cite{article2002} for decremental maintenance of SCCs. A Las Vegas algorithm is a probabilistic algorithm that always produces the correct result but may have varying running times. In this case, the algorithm maintains strongly connected components with an expected time complexity of 
+$O(mn)$ for any sequence of edge removals.
+
+Further improvements in deterministic maintainance of SCCs were made in \cite[2013]{scc_tree_reference}, by Jakub Lacki, who proposed a data structure called the SCC-Tree that allows for efficient decremental maintenance of SCCs. The SCC-Tree is a compact representation of the SCCs in the graph that can be updated efficiently in response to edge deletions. The SCC-Tree data structure allows for efficient queries about the SCCs in the graph and can be used to maintain SCCs under dynamic updates.
+
+The preprocessing time of the graph to build the SCC-tree takes $O(nm)$ time and this data structure maintains the SCCs of the graph in $O(m\delta)$ total time, where $\delta$ is the depth of the SCC-tree (worst-case $\delta = O(n)$).
+This preprocessing time of the graph is improved in \cite[2013]{article2013}, by Liam Roditty, from $O(nm)$ to $O(m\log n)$.
+We take inspiration from \cite{scc_tree_reference}, and extend it to maintain SCCs under both decremental and incremental updates.
+The implementation and evaluation of this extended algorithm are discussed in the following sections.

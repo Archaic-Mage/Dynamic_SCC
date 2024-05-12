@@ -1,3 +1,19 @@
 \section{Introduction} \label{Sec: Introduction}
-\blindtext
-\cite[1]{Example_Reference}
+
+Strongly connected components (SCCs) play a crucial role in graph theory, offering profound insights into the structure and connectivity of directed graphs. They are essential for understanding various real-world phenomena, ranging from social networks to computer algorithms.
+\begin{itemize} 
+
+    \item \textbf{Social Networks}:  In social networks like Facebook or Twitter, individuals form groups based on common interests, affiliations, or interactions. SCCs can help identify these tightly-knit communities within the network. For example, in a political analysis, identifying SCCs can reveal clusters of like-minded individuals or factions within a larger social network.
+    \item \textbf{Transportation Networks}:  In transportation networks, such as road or railway systems, SCCs can represent regions where travel between any pair of locations is possible without leaving the component. This is crucial for optimizing routes, identifying traffic bottlenecks, and designing efficient public transportation systems.
+    \item \textbf{Internet and Web Graphs:} The internet can be represented as a directed graph, where web pages are nodes and hyperlinks are edges. Identifying SCCs in this graph can reveal clusters of interconnected websites that share similar content or themes. This information is valuable for search engines to improve the relevance of search results and for analyzing the structure of the web.
+    \item \textbf{Compiler Design}:  In compiler construction, analyzing the control flow graph of a program involves finding SCCs. This helps in optimizing code, identifying loops, and performing various program analyses, such as data-flow analysis and reaching definitions analysis.
+    \item \textbf{Database Management}: In database systems, transactions between different parts of a database can be represented as a graph, where transactions are nodes and dependencies between them are edges. Detecting SCCs in these graphs helps in identifying sets of transactions that must be executed together or can be executed concurrently, improving database performance and transaction management.
+\end{itemize}
+
+In each of these cases, identifying strongly connected components provides valuable insights into the underlying structure and connectivity of the system, facilitating optimization, analysis, and decision-making processes.
+Thus, developing efficient algorithms to find SCCs in directed graphs is a fundamental problem in graph theory and computer science.
+
+There are various static linear time alogithms to find SCCs in a directed graph, such as Kosaraju's algorithm \cite{Kosaraju}, Tarjan's algorithm \cite{DBLP:journals/corr/abs-2201-07197}, that are partical and efficient for large-scale applications. However, these algorithms are designed for static graphs, where the graph structure does not change over time.
+The problem of finding SCCs in a dynamic graph, where edges can be inserted or deleted, is more challenging and has received significant attention in recent years. The static algorithms are re-run on the entire graph to find the SCCs after each set of updates, which is computationally expensive and inefficient for large-scale graphs.
+
+The goal of this project is to understand, formulate, and implement a dynamic parallel algorithm to find and maintain SCCs in a directed graph, where edges can be inserted or deleted dynamically. We aim to develop an efficient parallel algorithm that can handle large-scale graphs and leverage the computational power of modern multi-core processors and parallel computing platforms.

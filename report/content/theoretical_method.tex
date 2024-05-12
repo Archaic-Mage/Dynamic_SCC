@@ -89,6 +89,7 @@ Therefore, a edge $(u, v) \in E(G) | \text{\textsc{Query}}(u, v) = false$ correp
             $E(G') = E(G') \cup (\text{\textsc{SM}}_G(u), \text{\textsc{SM}}_G(v))$
         }
     }
+
     \caption{\textsc{Condense}(G)}
 \end{algorithm}
 
@@ -146,14 +147,13 @@ Let there be a graph $G$ such that it has a source vertex $s$ and a sink vertex 
 A vertex $v$ is said to reachable if there exists a path from $s$ to $v$ and a path from $v$ to $t$.
 We define the function \textsc{Unreachable}(G,s,t) as the process of identifying the set of vertices that are unreachable in $G$.
 
-\begin{algorithm}[H]
+\begin{algorithm}
     \SetAlgoLined
     \KwData{G, s, t}
     \KwResult{U}
-    $U = \emptyset$\;
+    $U = \emptyset, R = \emptyset$\;
     $G' =$ \textsc{Merge}(G, s, t, d)\;
     $S = \text{\textsc{FindScc}}(G')$\;
-    $R = \emptyset$\;
     \For {$U_i \in S$} {
         \If {$s \in U_i$} {
             $R = U_i$
@@ -210,7 +210,7 @@ the edges that were a part of the unreachable vertices in $L$ to the parent node
 This can be seen in \figureref{\ref{fig:tree_node_r_graph_exposed1}}, further details can be found in \secref{\ref{Subsubsec: Deleting Edge from the Root Node}} and \secref{\ref{Subsubsec: Deleting Edge from an Internal Node}}.
 \end{itemize}
 
-\begin{algorithm}[H]
+\begin{algorithm}
     \SetAlgoLined
     \KwData{L | SCC Tree Node}
     \KwResult{Updated SCC Tree}
