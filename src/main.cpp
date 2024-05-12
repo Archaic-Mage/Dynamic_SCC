@@ -82,11 +82,19 @@ int main(int argc, char *argv[])
       getline(std::cin, tmp);
     }
     getGraph(edges, n);
+
+    //static algorithm
+    auto s = std::chrono::high_resolution_clock::now();
+    std::unordered_map<long int, long int> sccs;
+    for (long int i = 0; i < n; i++)
+      sccs[i] = i;
+    SCC::findScc(edges, sccs);
+
     // int updates;
     // getUpdates(updates, decrement, increament);
     // int q;
     // getQueries(q, queries);
-    float ratio = 0.01;
+    float ratio = std::stof(argv[1]);
     int m = edges.size();
     int updates = m * ratio;
     srand(time(0));
@@ -96,6 +104,11 @@ int main(int argc, char *argv[])
       std::swap(edges[k], edges[m-1]);
       m--;
     }
+
+    SCC::findScc(edges, sccs);
+    auto e = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = e - s;
+    std::cout << "STATIC: " << elapsed.count() << "s" << std::endl;
   }
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -103,18 +116,18 @@ int main(int argc, char *argv[])
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   if (world.rank() == 0)
-    std::cout << "Time taken for initialisation: " << elapsed.count() << "s\n";
+    std::cout << "INIT: " << elapsed.count() << "s\n";
 
   start = std::chrono::high_resolution_clock::now();  
   scc.deleteEdges(decrement);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
   if (world.rank() == 0)
-    std::cout << "Time taken for updates: " << elapsed.count() << "s\n";
+    std::cout << "UPD: " << elapsed.count() << "s\n";
 
   if (world.rank() == 0) {
-    std::cout << "Number of SCCs: " << scc.getNumberOfSCCs() << std::endl;
-    std::ofstream out("output.txt");
+    // std::cout << "Number of SCCs: " << scc.getNumberOfSCCs() << std::endl;
+    std::ofstream out("output.tmp");
     for (auto query : queries)
     {
       if(scc.query(query.first, query.second))

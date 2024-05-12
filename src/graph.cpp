@@ -748,7 +748,7 @@ void MaintainSCC::processMessage()
         }
         else if (type == MessageType::CLR_DEC_CACHE)
         {
-            std::cout << "Clearing Delete Cache : " << world.rank() << std::endl;
+            // std::cout << "Clearing Delete Cache : " << world.rank() << std::endl;
             while (!delete_cache.empty())
             {
                 Cache c = *delete_cache.begin();
@@ -761,13 +761,13 @@ void MaintainSCC::processMessage()
                 }
             }
             world.send(0, 0, STATUS::DONE_NO_NEW);
-            std::cout << "Cleared Delete Cache : " << world.rank() << std::endl;
+            // std::cout << "Cleared Delete Cache : " << world.rank() << std::endl;
         }
         else if (type == MessageType::EDGE_INSERT)
         {
             Edge edge;
             world.recv(0, 1, edge);
-            std::cout << "Inserted Edge: " << edge.from << " " << edge.to << std::endl;
+            // std::cout << "Inserted Edge: " << edge.from << " " << edge.to << std::endl;
             insertEdge(edge);
         }
         else if (type == MessageType::CLR_INC_CACHE)
@@ -800,13 +800,13 @@ MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
             sccs[i] = i;
         findScc(edges, sccs);
 
-        std::cout << "Done FIND SCC\n" << std::endl;
+        // std::cout << "Done FIND SCC\n" << std::endl;
 
         std::unordered_map<long int, std::vector<Edge>> sccEdges;
         std::vector<Edge> inter_scc_edges;
         divideEdgesByScc(edges, sccs, sccEdges, inter_scc_edges, true);
 
-        std::cout << "Done DIVIDE EDGES\n" << std::endl;
+        // std::cout << "Done DIVIDE EDGES\n" << std::endl;
 
         std::unordered_map<long int, std::vector<long int>> sccNodes;
         for (auto &scc : sccs)
@@ -815,10 +815,10 @@ MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
             which_rank[scc.first] = scc.second % (world.size() - 1) + 1;
         }
 
-        std::cout << "Done DIVIDE NODES\n" << std::endl;
+        // std::cout << "Done DIVIDE NODES\n" << std::endl;
 
-        std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
-        std::cout << "Set of Edge: " << sccEdges.size() << std::endl;
+        // std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
+        // std::cout << "Set of Edge: " << sccEdges.size() << std::endl;
 
 
         for(auto &scc_node: sccNodes) {
@@ -832,7 +832,7 @@ MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
         changeSccLabels(sccs, sccNodes);
         constructMasterNode(edges, sccs);
 
-        std::cout << "Done CONSTRUCT MASTER NODE\n" << std::endl;
+        // std::cout << "Done CONSTRUCT MASTER NODE\n" << std::endl;
     }
     else
         processMessage();
@@ -897,6 +897,8 @@ void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
                 dTreeNode(scc_tree_nodes[0]);
             }
         }
+
+        // std::cout << "Done DELETE EDGES\n" << std::endl;
     }
 }
 
