@@ -15,6 +15,8 @@ void getGraph(std::vector<SCC::Edge> &edges, long int &n)
     long int from, to;
     std::cin >> from >> to;
     from++, to++;
+    if(from == to)
+      continue;
     edges.emplace_back(from, to);
   }
 }
