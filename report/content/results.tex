@@ -1,10 +1,10 @@
 \section{Results}\label{Sec: Results}
 In this section, we present the results of the experiments conducted. The results are in the form of tables and graphs.
 The details of the graphs used in the experiments are presented in Table \ref{tab:graph_details}. 
-The tables \ref{tab:timed_results_g1} to \ref{tab:timed_results_g8} present the timings for the experiments conducted on the graphs. 
-The timings are presented in seconds. The tables present the timings for the decremental, incremental, and both update operations. 
-The timings presented, compares the standard static algorithm to the dynamically maintained parallel algorithm. 
-The timings are presented for different percentages of updates w.r.t. edges. 
+The table \tableref{\ref{tab:ti}} presents the timings for the experiments conducted on the graphs. 
+The timings are presented in seconds. 
+The timings are compared with the standard static algorithm and the dynamically maintained parallel algorithm. 
+The timings are presented for different percentages of updates w.r.t. edges.
 
 The machine specifications are retrieved using the \texttt{lscpu} command. The machine specifications are as follows:
 \begin{description}[font=\sffamily\bfseries\small,itemsep=0pt,parsep=0pt]
@@ -74,6 +74,7 @@ All the testing was conducted on the same machine, with \texttt{-np} parameter s
 \begin{table}[H]
     \centering
     \caption{Timings for Graphs in \tableref{\ref{tab:graph_details}} }
+    \label{tab:ti}
 \parbox{0.45\linewidth}{
     \centering
     \caption{\texttt{Amazon0302}}
@@ -84,13 +85,13 @@ All the testing was conducted on the same machine, with \texttt{-np} parameter s
         \hline
         w.r.t. edges & Static &  Dynamic \\
         \hline
-        0 & 134.45s & 1657s \\
-        1 & 138.78s & 43.44s \\
-        5 & 2.9 & 3.0 \\
-        10 & 3.5 & 3.6 \\
-        15 & 4.1 & 4.2 \\
-        20 & 4.1 & 4.2 \\
-        30 & 4.7 & 4.8 \\
+        0 & 2.69061 & 9.04671 \\
+        1.0 & 2.69061 & 2.09399 \\
+        5.0 & 3.01042 & 2.24362 \\
+        10.0 & 3.09495 & 2.34654 \\
+        20.0 & 3.29579 & 2.6431 \\
+        30.0 & 3.40107 & 2.83777 \\
+        50.0 & 3.54919 & 3.25233 \\
         \hline
     \end{tabular}
 }
@@ -105,13 +106,13 @@ All the testing was conducted on the same machine, with \texttt{-np} parameter s
         \hline
         w.r.t. edges & Static &  Dynamic \\
         \hline
-        0 & 134.45s & 1657s \\
-        1 & 138.78s & 43.44s \\
-        5 & 2.9 & 3.0 \\
-        10 & 3.5 & 3.6 \\
-        15 & 4.1 & 4.2 \\
-        20 & 4.1 & 4.2 \\
-        30 & 4.7 & 4.8 \\
+        0 & 1.1383 & 5.30846 \\
+        1.0 & 1.1383 & 0.509686 \\
+        5.0 & 1.17131 & 0.64476 \\
+        10.0 & 1.19611 & 0.761259 \\
+        20.0 & 1.25575 & 1.04112 \\
+        30.0 & 1.4406 & 1.24635 \\
+        50.0 & 1.30949 & 1.67949 \\
         \hline
     \end{tabular}
 }
@@ -127,13 +128,13 @@ All the testing was conducted on the same machine, with \texttt{-np} parameter s
         \hline
         w.r.t. edges & Static &  Dynamic \\
         \hline
-        0 & 134.45s & 1657s \\
-        1 & 138.78s & 43.44s \\
-        5 & 2.9 & 3.0 \\
-        10 & 3.5 & 3.6 \\
-        15 & 4.1 & 4.2 \\
-        20 & 4.1 & 4.2 \\
-        30 & 4.7 & 4.8 \\
+        0 & 0.102256 & 0.435191 \\
+        1.0 & 0.102256 & 0.0353187 \\
+        5.0 & 0.108545 & 0.042797 \\
+        10.0 & 0.0966422 & 0.0540102 \\
+        20.0 & 0.101367 & 0.0726061 \\
+        30.0 & 0.0961294 & 0.0943561 \\
+        50.0 & 0.118703 & 0.136274 \\
         \hline
     \end{tabular}
 }
@@ -149,13 +150,13 @@ All the testing was conducted on the same machine, with \texttt{-np} parameter s
         \hline
         w.r.t. edges & Static &  Dynamic \\
         \hline
-        0 & 134.45s & 1657s \\
-        1 & 138.78s & 43.44s \\
-        5 & 2.9 & 3.0 \\
-        10 & 3.5 & 3.6 \\
-        15 & 4.1 & 4.2 \\
-        20 & 4.1 & 4.2 \\
-        30 & 4.7 & 4.8 \\
+        0 & 20.7767 & 37.7838 \\
+        1.0 & 20.7767 & 15.4092 \\
+        5.0 & 22.2939 & 17.7078 \\
+        10.0 & 22.7917 & 18.5541 \\
+        20.0 & 23.2082 & 19.1667 \\
+        30.0 & 23.4775 & 20.6392 \\
+        50.0 & 24.4343 & 23.8523 \\
         \hline
     \end{tabular}
 }
@@ -171,13 +172,13 @@ All the testing was conducted on the same machine, with \texttt{-np} parameter s
         \hline
         w.r.t. edges & Static &  Dynamic \\
         \hline
-        0 & 134.45s & 1657s \\
-        1 & 138.78s & 43.44s \\
-        5 & 2.9 & 3.0 \\
-        10 & 3.5 & 3.6 \\
-        15 & 4.1 & 4.2 \\
-        20 & 4.1 & 4.2 \\
-        30 & 4.7 & 4.8 \\
+        0 & 8.28039 & 39.5969 \\
+        1.0 & 8.28039 & 4.10159 \\
+        5.0 & 9.12419 & 8.08547 \\
+        10.0 & 9.88219 & 10.96283 \\
+        20.0 & 11.0039 & 16.96717 \\
+        30.0 & 11.4561 & 17.9223 \\
+        50.0 & 13.0278 & 18.2617 \\
         \hline
     \end{tabular}
 }
@@ -193,13 +194,13 @@ All the testing was conducted on the same machine, with \texttt{-np} parameter s
         \hline
         w.r.t. edges & Static &  Dynamic \\
         \hline
-        0 & 134.45s & 1657s \\
-        1 & 138.78s & 43.44s \\
-        5 & 2.9 & 3.0 \\
-        10 & 3.5 & 3.6 \\
-        15 & 4.1 & 4.2 \\
-        20 & 4.1 & 4.2 \\
-        30 & 4.7 & 4.8 \\
+        0 & 13.6496 & 42.7283 \\
+        1.0 & 13.6496 & 6.87915 \\
+        5.0 & 14.4792 & 9.60964 \\
+        10.0 & 14.9307 & 10.43506 \\
+        20.0 & 15.4813 & 15.0343 \\
+        30.0 & 15.8665 & 16.96263 \\
+        50.0 & 16.8315 & 23.3846 \\
         \hline
     \end{tabular}
 }
@@ -215,18 +216,69 @@ All the testing was conducted on the same machine, with \texttt{-np} parameter s
         \hline
         w.r.t. edges & Static &  Dynamic \\
         \hline
-        0 & 134.45s & 1657s \\
-        1 & 138.78s & 43.44s \\
-        5 & 2.9 & 3.0 \\
-        10 & 3.5 & 3.6 \\
-        15 & 4.1 & 4.2 \\
-        20 & 4.1 & 4.2 \\
-        30 & 4.7 & 4.8 \\
+        0 & 134.453 & 257.21 \\
+        1.0 & 138.789 & 102.434 \\
+        5.0 & 139.223 & 120.928 \\
+        10.0 & 140.712 & 139.932 \\
+        20.0 & 139.883 & 141.283 \\
+        30.0 & 141.291 & 170.221 \\
+        50.0 & 142.843 & 174.898 \\
         \hline
     \end{tabular}
 }
 \hfill
 \end{table}
+
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{./Figures/Amazon0302.out.png}
+        \caption{\texttt{Amazon0302}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{./Figures/Slashdot0902.out.png}
+        \caption{\texttt{Slashdot0902}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{./Figures/Wiki-Vote.out.png}
+        \caption{\texttt{Wiki-Vote}}
+    \end{subfigure}
+    \vspace{0.5cm}
+    
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{./Figures/WikiTalk.out.png}
+        \caption{\texttt{WikiTalk}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{./Figures/web-BerkStan.out.png}
+        \caption{\texttt{web-BerkStan}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{./Figures/web-Google.out.png}
+        \caption{\texttt{web-Google}}
+    \end{subfigure}
+    \vspace{0.5cm}
+    
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{./Figures/big.png}
+        \caption{\texttt{soc-pokec-relationships}}
+    \end{subfigure}
+    \hfill
+    % Add more subfigures if needed
+    \caption{Graphs Timings for \tableref{\ref{tab:graph_details}}}
+    \label{fig:seven_images}
+\end{figure}
 
 
 

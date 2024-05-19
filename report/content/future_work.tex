@@ -1,2 +1,10 @@
 \section{Future Work}\label{Sec: Future Work}
-\blindtext
+The work presented in the paper is a preliminary study and implementation of the parallel dynamic graph algorithms.
+The SCC finding algorithm used in this paper is a linear sequential algorithm, which is not very efficient and fast on larger graphs.
+We can use any parallel SCC finding algorithms in \cite{implementation} and extend it to fit the dynamic graph setting using the algorithm presented in this paper.
+The SCC-tree can further be exploited to make computations more parallel since the it is a directed acyclic graph and changes in the graph can be propagated in parallel.
+
+The combination of distributed memory parallelism and shared memory parallelism can be used to make the algorithm more scalable. 
+The underlying dynamic graph maintainance algorithm can be improved to make it more parallel and efficient. 
+The future endeavors can also bring in the use of GPUs to make the algorithm more efficient and faster. 
+Randomized algorithms can be used to make the process more faster, and efficient methods of synchronization can be used to make the algorithm more reliable and scalable.

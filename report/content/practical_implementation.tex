@@ -337,19 +337,18 @@ Since, we need to propogate the changes from the node to the child node, we need
 
 \begin{table}[H]
     \centering
-    \caption{Timings with/without Cache Optimizations}
+    \caption{Timings with/without Cache Optimizations (\texttt{Amazon0302})}
     \begin{tabular}{|c|c|c|}
         \hline
         \textbf{Updates(\%)} & \textbf{With Caching} & \textbf{Without Caching} \\
         \hline
-        \texttt{0} & 3,072,441 & 234,370,166 \\
-        \texttt{1} & 58,655,849 & 261,321,071 \\
-        \texttt{5} & 3,370,462 & 93,373,056 \\
-        \texttt{10} & 4,847,571 & 68,993,773 \\
-        \texttt{15} & 1,632,803 & 30,622,564 \\
-        \texttt{20} & 21,297,772 & 265,025,809 \\
-        \texttt{30} & 16,777,216 & 87,654,320 \\
-        \texttt{50} & 10,000,000 & 80,000,000 \\
+        0 & 9.04671 & 10.0534 \\
+        1.0 & 2.09399 & 15.9024 \\
+        5.0 & 2.24362 & 23.2398\\
+        10.0 & 2.34654 & 40.28242 \\
+        20.0 & 2.6431 & 50.2302 \\
+        30.0 & 2.83777 & 56.28420 \\
+        50.0 & 3.25233 & 88.23823\\
         \hline
     \end{tabular}
     \label{tab:cache_optimizations}
