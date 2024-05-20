@@ -21,36 +21,6 @@ void getGraph(std::vector<SCC::Edge> &edges, long int &n)
   }
 }
 
-// Function to get the list of updates
-void getUpdates(int &updates, std::vector<SCC::Edge> &decrement, std::vector<SCC::Edge> &increament)
-{
-  std::cin >> updates;
-  for (int i = 0; i < updates; i++)
-  {
-    int type;
-    std::cin >> type;
-    long int from, to;
-    std::cin >> from >> to;
-    from++, to++;
-    if (type == 0)
-      decrement.emplace_back(from, to);
-    else
-      increament.emplace_back(from, to);
-  }
-}
-
-void getQueries(int &q, std::vector<std::pair<long int, long int>> &queries)
-{
-  std::cin >> q;
-  for (int i = 0; i < q; i++)
-  {
-    int v1, v2;
-    std::cin >> v1 >> v2;
-    v1++, v2++;
-    queries.emplace_back(v1, v2);
-  }
-}
-
 namespace mt = boost::mpi::threading;
 
 int main(int argc, char *argv[])
@@ -64,6 +34,7 @@ int main(int argc, char *argv[])
   boost::mpi::environment env(argc, argv, mt::funneled);
   boost::mpi::communicator world;
 
+  // checking if the mpi supports the required threading level
   if(env.thread_level() < mt::funneled) {
     if(world.rank() == 0) {
       std::cerr << "This program requires MPI_THREAD_FUNNELED support from MPI. Exiting..." << std::endl;
@@ -79,7 +50,7 @@ int main(int argc, char *argv[])
 
   if (world.rank() == 0)
   {
-    for(int i = 0; i<4; i++) {
+    for(int i = 0; i<7; i++) {
       std::string tmp;
       getline(std::cin, tmp);
     }
@@ -92,10 +63,7 @@ int main(int argc, char *argv[])
       sccs[i] = i;
     SCC::findScc(edges, sccs);
 
-    // int updates;
-    // getUpdates(updates, decrement, increament);
-    // int q;
-    // getQueries(q, queries);
+    // emulating the dynamic updates
     float ratio = std::stof(argv[1]);
     int m = edges.size();
     int updates = m * ratio;
@@ -107,37 +75,30 @@ int main(int argc, char *argv[])
       m--;
     }
 
+    // emulating the re-run of the algorithm
     SCC::findScc(edges, sccs);
     auto e = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = e - s;
     std::cout << "STATIC: " << elapsed.count() << "s" << std::endl;
   }
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto s = std::chrono::high_resolution_clock::now();
+  // this structrue is maintained by the master but is shared with all the workers
   SCC::MaintainSCC scc(n, edges);
-  auto end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = end - start;
-  if (world.rank() == 0)
-    std::cout << "INIT: " << elapsed.count() << "s\n";
 
-  start = std::chrono::high_resolution_clock::now();  
-  scc.deleteEdges(decrement);
-  end = std::chrono::high_resolution_clock::now();
-  elapsed = end - start;
-  if (world.rank() == 0)
-    std::cout << "UPD: " << elapsed.count() << "s\n";
+  if(world.rank() == 0) {
+    auto e = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = e - s;
+    std::cout << "INIT: " << elapsed.count() << "s" << std::endl;
 
-  if (world.rank() == 0) {
-    // std::cout << "Number of SCCs: " << scc.getNumberOfSCCs() << std::endl;
-    std::ofstream out("output.tmp");
-    for (auto query : queries)
-    {
-      if(scc.query(query.first, query.second))
-        out << "YES\n";
-      else
-        out << "NO\n";
-    }
+    s = std::chrono::high_resolution_clock::now();
+    // sending the updates to all the workers
+    scc.deleteEdges(decrement);
+    e = std::chrono::high_resolution_clock::now();
+    elapsed = e - s;
+    std::cout << "UPDATES: " << elapsed.count() << "s" << std::endl;
   }
+
 
   return 0;
 }

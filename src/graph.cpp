@@ -3,6 +3,273 @@
 
 namespace SCC {
 
+namespace COMPUTE_SCC {
+
+int getVerticesDone(std::vector<int> & trim, int max_threads) {
+    int vertices_done = 0;
+    #pragma omp parallel for num_threads(max_threads) reduction(+:vertices_done)
+    for(int i = 0; i<trim.size(); i++) {
+        vertices_done += trim[i];
+    }
+    return vertices_done;
+}
+
+void tarjan_scc(std::vector< std::vector < int >> & adj_list, std::vector<int> & sccs, std::vector<int> & trim, int v, std::vector<int> & low, std::vector<int> & disc, std::stack<int> & st, std::vector<bool> & stack_member) {
+    static int time = 0;
+    disc[v] = low[v] = ++time;
+    st.push(v);
+    stack_member[v] = true;
+
+    for(int c: adj_list[v]) {
+        if(trim[c] == 1) continue;
+        if(disc[c] == -1) {
+            tarjan_scc(adj_list, sccs, trim, c, low, disc, st, stack_member);
+            low[v] = std::min(low[v], low[c]);
+        } else if(stack_member[c] == true) {
+            low[v] = std::min(low[v], disc[c]);
+        }
+    }
+
+    int w = 0;
+    if(low[v] == disc[v]) {
+        while(st.top() != v) {
+            w = st.top();
+            sccs[w] = v;
+            trim[w] = 1;
+            stack_member[w] = false;
+            st.pop();
+        }
+        w = st.top();
+        sccs[w] = v;
+        trim[w] = 1;
+        stack_member[w] = false;
+        st.pop();
+    }
+}
+
+void init_tarjan(std::vector< std::vector < int >> & adj_list, std::vector<int> & sccs, std::vector<int> & trim, int n) {
+    std::vector<int> low(n, -1);
+    std::vector<int> disc(n, -1);
+    std::stack<int> st;
+    std::vector<bool> stack_member(n, false);
+
+    for(int i = 0; i<n; i++) {
+        if(trim[i] == 0 && disc[i] == -1) {
+            tarjan_scc(adj_list, sccs, trim, i, low, disc, st, stack_member);
+        }
+    }
+}
+
+void fwbw(std::vector< std::vector < int >> & adj_list, std::vector< std::vector < int >> & adj_list_rev, std::vector<int> & sccs, std::vector<int> & trim, int pivot, int n, int max_threads) {
+    std::vector<int> visited(n, 0);
+    std::vector<int> queue;
+    std::vector<std::vector<int>> thread_queue(max_threads);
+    queue.push_back(pivot);
+    // Forward traversal
+    while(!queue.empty()) {
+        #pragma omp parallel for num_threads(max_threads)
+        for(int v: queue) {
+            int tid = omp_get_thread_num();
+            for(int c: adj_list[v]) {
+                if(trim[c] == 1) continue;
+                if(!visited[c]) {
+                    visited[c] = 1;
+                    thread_queue[tid].push_back(c);
+                }
+            }
+        }
+        queue.clear();
+        for(int i = 0; i<max_threads; i++) {
+            for(int v: thread_queue[i]) {
+                queue.push_back(v);
+            }
+            thread_queue[i].clear();
+        }
+    }
+  
+
+    // Backward traversal
+    queue.push_back(pivot);
+    sccs[pivot] = pivot;
+    trim[pivot] = 1;
+    while(!queue.empty()) {
+        #pragma omp parallel for num_threads(max_threads)
+        for(int v: queue) {
+            int tid = omp_get_thread_num();
+            for(int c: adj_list_rev[v]) {
+                if(trim[c] == 1) continue;
+                if(visited[c] == 1) {
+                    visited[c] = 2;
+                    sccs[c] = pivot;
+                    trim[c] = 1;
+                    thread_queue[tid].push_back(c);
+                }
+            }
+        }
+        queue.clear();
+        for(int i = 0; i<max_threads; i++) {
+            for(int v: thread_queue[i]) {
+                queue.push_back(v);
+            }
+            thread_queue[i].clear();
+        }
+    }
+
+}
+    
+void colorGraph(std::vector< std::vector < int >> & adj_list, std::vector< std::vector < int >> & adj_list_rev, std::vector<int> & sccs, std::vector<int> & trim, int n, int max_threads) {
+    // Coloring
+    std::vector<int> color(n, -1);
+    std::vector<int> queue;
+    std::vector<std::vector<int>> thread_queue(max_threads);
+    std::vector<bool> in_next_queue(n,0);
+
+
+    for(int i = 0; i<n; i++) {
+        if(trim[i] == 0) {
+            color[i] = i;
+            queue.push_back(i);
+            in_next_queue[i] = false;
+        }
+    }
+
+    while(!queue.empty()) {
+        #pragma omp parallel for num_threads(max_threads)
+        for(int v: queue) {
+            bool any_color_change = false;
+            int tid = omp_get_thread_num();
+            for(int c: adj_list[v]) {
+                if(trim[c] == 1) continue;
+                if(color[v] > color[c]) {
+                    color[c] = color[v];
+                    any_color_change = true;
+                    if(!in_next_queue[c]) {
+                        thread_queue[tid].push_back(c);
+                        in_next_queue[c] = true;
+                    }
+                }
+            }
+            if(any_color_change) {
+                if(!in_next_queue[v]) {
+                    thread_queue[tid].push_back(v);
+                    in_next_queue[v] = true;
+                }
+            }
+        }
+        queue.clear();
+        for(int i = 0; i<max_threads; i++) {
+            for(int v: thread_queue[i]) {
+                queue.push_back(v);
+                in_next_queue[v] = false;
+            }
+            thread_queue[i].clear();
+        }
+    }
+
+
+    for(int i = 0; i<n; i++) {
+        if(trim[i] == 0) {
+            if(!in_next_queue[color[i]]) {
+                queue.push_back(color[i]);
+                sccs[color[i]] = color[i];
+                trim[color[i]] = 1;
+                in_next_queue[color[i]] = true;
+            }
+        }
+    }
+
+    // #pragma omp parallel for num_threads(max_threads)
+    while(!queue.empty()) {
+        #pragma omp parallel for num_threads(max_threads)
+        for(int v: queue) {
+            int tid = omp_get_thread_num();
+            for(int c: adj_list_rev[v]) {
+                if(!trim[c] && color[c] == color[v]) {
+                    sccs[c] = sccs[v];
+                    trim[c] = 1;
+                    if(!in_next_queue[c]) {
+                        thread_queue[tid].push_back(c);
+                        in_next_queue[c] = true;
+                    }
+                }
+            }
+        }
+        queue.clear();
+        for(int i = 0; i<max_threads; i++) {
+            for(int v: thread_queue[i]) {
+                queue.push_back(v);
+                in_next_queue[v] = false;
+            }
+            thread_queue[i].clear();
+        }
+    }
+}
+
+// requires continuous vertex labels
+void find_scc(std::vector< std::vector < int >> & adj_list, std::vector< std::vector < int >> &adj_list_rev, std::vector<int> & sccs, int n, int m, int max_threads) {
+
+    // degree of each vertex
+    std::vector<int> in_degree(n, 0);
+    std::vector<int> out_degree(n, 0);
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i < n; i++) {
+        out_degree[i] = adj_list[i].size();
+        in_degree[i] = adj_list_rev[i].size();
+    }
+
+        // trim the graph - remove vertices with degree(in/out) = 0 one-step
+    std::vector<int> trim(n, 0);
+
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<n; i++) {
+        if(in_degree[i] == 0 || out_degree[i] == 0) {
+            trim[i] = 1;
+            sccs[i] = i;
+        }
+    }
+
+    // int trimmed_vertices = getVerticesDone(trim, max_threads);
+    // std::cout << "Number of vertices trimmed: " << trimmed_vertices << std::endl;
+
+    //forward backward traversal
+    int pivot = 0;
+    long int mx_deg_mul = 0;
+
+    for(int i = 0; i<n; i++) {
+        if((long int) in_degree[i]*out_degree[i] > mx_deg_mul) {
+            mx_deg_mul = in_degree[i]*out_degree[i];
+            pivot = i;
+        }
+    }
+
+    fwbw(adj_list, adj_list_rev, sccs, trim, pivot, n, max_threads);
+
+    // int fw_bw_vertices = getVerticesDone(trim, max_threads);
+    // std::cout << "Number of vertices done in FW-BW: " << fw_bw_vertices << std::endl;
+
+    //coloring
+    int vertex_done = getVerticesDone(trim, max_threads);
+    while(vertex_done < n && (n-vertex_done) > 100000) {
+        // vertex_done = 0;
+        colorGraph(adj_list, adj_list_rev, sccs, trim, n, max_threads);
+        
+        vertex_done = getVerticesDone(trim, max_threads);
+    }
+
+    // int colored_vertices = getVerticesDone(trim, max_threads);
+    // std::cout << "Number of vertices done in coloring: " << colored_vertices << std::endl;
+
+    // tarjans
+    init_tarjan(adj_list, sccs, trim, n);
+
+    // int scc_vertices = getVerticesDone(trim, max_threads);
+    // std::cout << "Number of vertices done in Tarjan's: " << scc_vertices << std::endl;
+
+}
+
+}
+
+
 int MaintainSCC::getLabel()
 {
     int ret = SCC_LABEL;
@@ -23,73 +290,65 @@ void dfs(long int u, std::unordered_map<long int, std::vector<long int>> &adj, s
     order.push_back(u);
 }
 
-void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long int> &sccs) {
-    std::unordered_map<long int, std::vector<long int>> adj;
-    std::unordered_map<long int, std::vector<long int>> adj_rev;
-    std::unordered_map<long int, int> visited;
-    std::vector<long int> order;
-    std::stack<long int> st;
-    int mx = 0;
 
-    for (Edge edge : edges) {
-        adj[edge.from].push_back(edge.to);
-        adj_rev[edge.to].push_back(edge.from);
-    }
-    std::function<void(void)> mark_unvisited = [&]() {
-        for (const auto& [label, v] : sccs) {
-            if (mx < label) mx = label;
-            visited[label] = false;
-        }
-    };
-    std::function<void(long int)> dfs2 = [&](long int u) {
-        st.push(u);
-        visited[u] = 1;
-        sccs[u] = mx;
-        while(!st.empty()) {
-            long int v = st.top();
-            st.pop();
-            for (long int w : adj_rev[v]) {
-                if (!visited[w]) {
-                    st.push(w);
-                    visited[w] = 1;
-                    sccs[w] = mx;
-                }
-            }
-        }
-    };
-    std::function<void(long int)> dfs1 = [&](long int u) {
-        st.push(u);
-        // 0 - not called, 1 - called and not finished, 2 - finished
-        while(!st.empty()) {
-            long int v = st.top();
-            if(visited[v] > 0) {
-                if(visited[v] != 2) order.push_back(v);
-                visited[v] = 2;
-                st.pop();
-                continue;
-            }
-            visited[v] = 1;
-            for (long int w : adj[v]) {
-                if (!visited[w]) {
-                    st.push(w);
-                }
-            }
-        }
-    };
-    mark_unvisited();
-    for (const auto& [label,v]: sccs) {
-        if (!visited[label]) {
-            dfs1(label);
-        }
-    }
-    mark_unvisited();
-    for (long int i = order.size() - 1; i >= 0; i--) {
-        if (!visited[order[i]]) {
-            dfs2(order[i]);
-            mx++;
-        }
-    }
+void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long int> &sccs) {
+    int n = sccs.size();
+    int m = edges.size();
+    int max_threads = omp_get_max_threads();
+    std::vector<Edge> edges_copy(m);
+    std::vector< std::vector < int >> adj_list_new(n);
+    std::vector< std::vector < int >> adj_list_rev_new(n);
+    std::vector<int> sccs_new(n, -1);
+    std::unordered_map<int, int> vertex_hash;
+    std::vector<int> vertex_unhash(n,0);
     
+    vertex_hash.reserve(n);
+    //filling the vertex_map
+    for(auto it = sccs.begin(); it != sccs.end(); it++) {
+        int at = vertex_hash.size();
+        vertex_hash[it->first] = at;
+        vertex_unhash[at] = it->first;
+    }
+
+    // change the vertex labels in the edges
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<m; i++) {
+        edges_copy[i].from = vertex_hash[edges[i].from];
+        edges_copy[i].to = vertex_hash[edges[i].to];
+    }
+
+    //locks required for adj_list_new
+    omp_lock_t** lock = new omp_lock_t*[n];
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<n; i++) {
+        lock[i] = new omp_lock_t;
+        omp_init_lock(lock[i]);
+    }
+
+    //filling the adj_list_new and adj_list_rev_new
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<m; i++) {
+        int u = edges_copy[i].from;
+        int v = edges_copy[i].to;
+        omp_set_lock(lock[u]);
+        adj_list_new[u].push_back(v);
+        omp_unset_lock(lock[u]);
+    }
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<m; i++) {
+        int u = edges_copy[i].from;
+        int v = edges_copy[i].to;
+        omp_set_lock(lock[v]);
+        adj_list_rev_new[v].push_back(u);
+        omp_unset_lock(lock[v]);
+    }
+
+    COMPUTE_SCC::find_scc(adj_list_new, adj_list_rev_new, sccs_new, n, m, max_threads);
+    
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<n; i++) {
+        sccs[vertex_unhash[i]] = sccs_new[i];
+    }
 }
 
 void TreeNode::removeEdge(const Edge &edge)
@@ -234,35 +493,43 @@ void MaintainSCC::divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<
     }
 }
 
+int MaintainSCC::getSplitNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs)
+{
+    int n = sccs.size();
+    int m = edges.size();
+    int max_threads = omp_get_max_threads();
+    std::unordered_map<int , int> label_hash;
+    std::vector<int> label_unhash(sccs.size(), 0);
+    for(const auto &[node, _]: sccs) {
+        label_hash[node] = label_hash.size();
+        label_unhash[label_hash.size()-1] = node;
+    }
+    std::vector<int> in_degree(sccs.size(), 0);
+    std::vector<int> out_degree(sccs.size(), 0);
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<m; i++) {
+        out_degree[label_hash[sccs[edges[i].from]]]++;
+        in_degree[label_hash[sccs[edges[i].to]]]++;
+    }
+
+    int deg_mul = 0, pivot = 0;
+    #pragma omp parallel for num_threads(max_threads) reduction(max:deg_mul)
+    for (int i = 0; i < sccs.size(); i++)
+    {
+        deg_mul = std::max(deg_mul, in_degree[i] * out_degree[i]);
+    }
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<n; i++) {
+        if(in_degree[i]*out_degree[i] == deg_mul) {
+            pivot = label_unhash[i];
+        }
+    }
+    return pivot;
+}
+
 /*** Functions to make SCC Tree ***/
 void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &currentNode)
 {
-
-    // std::cout << "Current Node: " << currentNode.label << std::endl;
-
-    scc_tree_labels[currentNode.label] = currentNode.label;
-
-    //get split on vertex (we choose vertex with highest degree (total))
-    long int split_on = -1;
-    std::unordered_map<long int, int> degree;
-    // O(m)
-    for (auto &e : edge)
-    {
-        degree[e.from]++;
-        degree[e.to]++;
-    }
-    int max_degree = -1;
-    for (auto &d : degree)
-    {
-        if (d.second > max_degree)
-        {
-            max_degree = d.second;
-            split_on = d.first;
-        }
-    }
-
-    // O(m)
-    splitGraphOnNode(edge, split_on);
 
     // O(m + n)
     // actual node -> temp label
@@ -271,6 +538,20 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
         sccs[from] = from;
         sccs[to] = to;
     }
+    // std::cout << "Current Node: " << currentNode.label << std::endl;
+    int n = sccs.size();
+    int m = edge.size();
+    int max_threads = omp_get_max_threads();
+
+    scc_tree_labels[currentNode.label] = currentNode.label;
+
+    //get split on vertex (we choose vertex with highest degree (total))
+    long int split_on = getSplitNode(edge, sccs);
+
+    // O(m)
+    splitGraphOnNode(edge, split_on);
+
+    sccs[-split_on] = -split_on;
 
     // Optimizing timing by reducing the depts (capping at MAX_DEPT)
     int next_dept = currentNode.dept + 1;
@@ -731,20 +1012,25 @@ void MaintainSCC::processMessage()
         world.recv(0, 0, type);
         if (type == MessageType::EXIT)
             break;
+        else if(type == MessageType::LABELS) {
+            world.recv(0, 1, SCC_LABEL);
+        }
         else if (type == MessageType::SCC_TREE)
         {
             std::vector<long int> nodes;
             std::vector<Edge> edgeList;
-            world.recv(0, 1, SCC_LABEL);
-            world.recv(0, 2, nodes);
-            world.recv(0, 3, edgeList);
+            world.recv(0, 1, nodes);
+            world.recv(0, 2, edgeList);
             makeSccTree(edgeList, nodes);
+            world.send(0, 0, STATUS::DONE_NO_NEW);
         }
         else if (type == MessageType::EDGE_DELETE)
         {
             Edge edge;
             world.recv(0, 1, edge);
+            // std::cout << "Deleting Edge: " << edge.from << " " << edge.to << std::endl;
             deleteEdge(edge);
+            // std::cout << "Deleted Edge: " << edge.from << " " << edge.to << std::endl;
         }
         else if (type == MessageType::CLR_DEC_CACHE)
         {
@@ -800,13 +1086,13 @@ MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
             sccs[i] = i;
         findScc(edges, sccs);
 
-        // std::cout << "Done FIND SCC\n" << std::endl;
+        std::cout << "Done FIND SCC\n" << std::endl;
 
         std::unordered_map<long int, std::vector<Edge>> sccEdges;
         std::vector<Edge> inter_scc_edges;
         divideEdgesByScc(edges, sccs, sccEdges, inter_scc_edges, true);
 
-        // std::cout << "Done DIVIDE EDGES\n" << std::endl;
+        std::cout << "Done DIVIDE EDGES\n" << std::endl;
 
         std::unordered_map<long int, std::vector<long int>> sccNodes;
         for (auto &scc : sccs)
@@ -815,24 +1101,44 @@ MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
             which_rank[scc.first] = scc.second % (world.size() - 1) + 1;
         }
 
-        // std::cout << "Done DIVIDE NODES\n" << std::endl;
+        std::cout << "Done DIVIDE NODES\n" << std::endl;
 
-        // std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
-        // std::cout << "Set of Edge: " << sccEdges.size() << std::endl;
+        std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
+        std::cout << "Set of Edge: " << sccEdges.size() << std::endl;
 
-
-        for(auto &scc_node: sccNodes) {
-            int to_rank = which_rank[scc_node.second[0]];
-            world.send(to_rank, 0, MessageType::SCC_TREE);
-            world.send(to_rank, 1, SCC_LABEL + to_rank);
-            world.send(to_rank, 2, scc_node.second);
-            world.send(to_rank, 3, sccEdges[scc_node.first]);
+        for(int i = 1; i<world_size; i++) {
+            world.send(i, 0, MessageType::LABELS);
+            world.send(i, 1, SCC_LABEL+i);
         }
+
+        for(auto &scc_edge: sccEdges) {
+            int to_rank = which_rank[scc_edge.second[0].from];
+            world.send(to_rank, 0, MessageType::SCC_TREE);
+            world.send(to_rank, 1, sccNodes[scc_edge.first]);
+            world.send(to_rank, 2, scc_edge.second);
+        }
+
+        // for(auto &scc_node: sccNodes) {
+        //     int to_rank = which_rank[scc_node.second[0]];
+        //     world.send(to_rank, 0, MessageType::SCC_TREE);
+        //     world.send(to_rank, 1, scc_node.second);
+        //     world.send(to_rank, 2, sccEdges[scc_node.first]);
+        // }
 
         changeSccLabels(sccs, sccNodes);
         constructMasterNode(edges, sccs);
 
-        // std::cout << "Done CONSTRUCT MASTER NODE\n" << std::endl;
+        std::cout << "Done CONSTRUCT MASTER NODE\n" << std::endl;
+
+        // wait for the completion of the process
+        boost::mpi::request req[world.size()];
+        STATUS status[world.size()];
+        for (int i = 1; i < world.size(); i++)
+        {
+            req[i] = world.irecv(i, 0, status[i]);
+        }
+        boost::mpi::wait_all(req + 1, req + world.size());
+        std::cout << "Done WAITING\n" << std::endl;
     }
     else
         processMessage();
@@ -857,7 +1163,8 @@ void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
                 deleteEdgeFromMaster(edge);
             }
         }
-        for (int i = 0; i < world.size(); i++)
+        std::cout << "Deleted Edges" << std::endl;
+        for (int i = 1; i < world.size(); i++)
         {
             world.send(i, 0, MessageType::CLR_DEC_CACHE);
         }
@@ -870,6 +1177,8 @@ void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
             req[i] = world.irecv(i, 0, status[i]);
         }
         boost::mpi::wait_all(req + 1, req + world.size());
+        
+        std::cout << "Done Delete-Cache Request" << std::endl;
 
         for (int i = 1; i < world.size(); i++)
         {
@@ -880,10 +1189,7 @@ void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
                 // std::vector<std::pair<long int, int>> transfer_list;
                 world.recv(i, 1, edges);
                 world.recv(i, 2, node_list);
-                for (auto edge : edges)
-                {
-                    dEdge(edge);
-                }
+                
                 for (auto &node : node_list)
                 {
                     sccs[node.first] = node.second;
@@ -892,13 +1198,12 @@ void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
                     // transfer_list.emplace_back(std::make_pair(node.first, to_rank));
                 }
                 updateMasterNode(0, edges, sccs);
-                // world.send(i, 0, STATUS::TRANSFER);
-                // world.send(i, 1, transfer_list);
-                dTreeNode(scc_tree_nodes[0]);
+                world.recv(i, 0, status[i]);
+                std::cout << "Waited for New SCC completion" << std::endl;
             }
         }
 
-        // std::cout << "Done DELETE EDGES\n" << std::endl;
+        std::cout << "Done DELETE EDGES\n" << std::endl;
     }
 }
 

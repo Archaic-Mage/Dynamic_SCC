@@ -1,6 +1,7 @@
 #pragma once
 #include <map>
 #include <set>
+#include <omp.h>
 #include <stack>
 #include <queue>
 #include <thread>
@@ -316,6 +317,7 @@ class MaintainSCC {
         SCC_TRANSFER,
         CLR_DEC_CACHE,
         CLR_INC_CACHE,
+        LABELS,
         EXIT
     };
 
@@ -328,6 +330,7 @@ class MaintainSCC {
     };
 
     int getLabel();
+    int getSplitNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
     void traverseNode(int node, std::unordered_map<long int, long int> &new_sccs);
     void splitGraphOnNode(std::vector<Edge> &edges, long int node);
     void divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, 
