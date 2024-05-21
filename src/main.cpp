@@ -6,14 +6,14 @@
 #include <boost/mpi.hpp>
 
 // Function to get the graph from the input (O(m))
-void getGraph(std::vector<SCC::Edge> &edges, long int &n)
+void getGraph(std::ifstream &file ,std::vector<SCC::Edge> &edges, long int &n)
 {
   long int m;
-  std::cin >> n >> m;
+  file >> n >> m;
   for (long unsigned int i = 0; i < m; i++)
   {
     long int from, to;
-    std::cin >> from >> to;
+    file >> from >> to;
     from++, to++;
     if(from == to)
       continue;
@@ -25,11 +25,6 @@ namespace mt = boost::mpi::threading;
 
 int main(int argc, char *argv[])
 {
-  // setting up fast input output
-  std::ios_base::sync_with_stdio(false);
-  std::cin.tie(NULL);
-  std::cout.tie(NULL);
-
   // setting up mpi (boost)
   boost::mpi::environment env(argc, argv, mt::funneled);
   boost::mpi::communicator world;
@@ -48,13 +43,17 @@ int main(int argc, char *argv[])
   std::vector<SCC::Edge> increament;
   std::vector<std::pair<long int, long int>> queries;
 
+  std::string filename = argv[2];
+  std::ifstream file(filename);
+
+  for(int i = 0; i<4; i++) {
+    std::string tmp;
+    getline(file, tmp);
+  }
+  getGraph(file,edges, n);
+
   if (world.rank() == 0)
   {
-    for(int i = 0; i<7; i++) {
-      std::string tmp;
-      getline(std::cin, tmp);
-    }
-    getGraph(edges, n);
 
     //static algorithm
     auto s = std::chrono::high_resolution_clock::now();
@@ -82,22 +81,24 @@ int main(int argc, char *argv[])
     std::cout << "STATIC: " << elapsed.count() << "s" << std::endl;
   }
 
+  world.barrier();
+
   auto s = std::chrono::high_resolution_clock::now();
   // this structrue is maintained by the master but is shared with all the workers
   SCC::MaintainSCC scc(n, edges);
 
-  if(world.rank() == 0) {
-    auto e = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = e - s;
-    std::cout << "INIT: " << elapsed.count() << "s" << std::endl;
+  // if(world.rank() == 0) {
+  //   auto e = std::chrono::high_resolution_clock::now();
+  //   std::chrono::duration<double> elapsed = e - s;
+  //   std::cout << "INIT: " << elapsed.count() << "s" << std::endl;
 
-    s = std::chrono::high_resolution_clock::now();
-    // sending the updates to all the workers
-    scc.deleteEdges(decrement);
-    e = std::chrono::high_resolution_clock::now();
-    elapsed = e - s;
-    std::cout << "UPDATES: " << elapsed.count() << "s" << std::endl;
-  }
+  //   s = std::chrono::high_resolution_clock::now();
+  //   // sending the updates to all the workers
+  //   scc.deleteEdges(decrement);
+  //   e = std::chrono::high_resolution_clock::now();
+  //   elapsed = e - s;
+  //   std::cout << "UPDATES: " << elapsed.count() << "s" << std::endl;
+  // }
 
 
   return 0;

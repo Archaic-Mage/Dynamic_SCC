@@ -335,7 +335,7 @@ class MaintainSCC {
     void splitGraphOnNode(std::vector<Edge> &edges, long int node);
     void divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, 
                     std::unordered_map<long int, std::vector<Edge>> &sccEdges, std::vector<Edge> &inter_scc_edges, bool split);
-    void makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &currentNode);
+    void makeSccTreeInternals(std::vector<Edge> &edge, std::vector<long int> &nodes, TreeNode &currentNode);
     void makeSccTree(std::vector<Edge> &edges, std::vector<long int> &nodes);
     void changeSccLabels(std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<long int>> &sccNodes);
     void constructMasterNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);

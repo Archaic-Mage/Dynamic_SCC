@@ -528,15 +528,14 @@ int MaintainSCC::getSplitNode(std::vector<Edge> &edges, std::unordered_map<long 
 }
 
 /*** Functions to make SCC Tree ***/
-void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &currentNode)
+void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, std::vector<long int> &nodes, TreeNode &currentNode)
 {
 
     // O(m + n)
     // actual node -> temp label
     std::unordered_map<long int, long int> sccs;
-    for(auto &[from, to] : edge) {
-        sccs[from] = from;
-        sccs[to] = to;
+    for(auto &node: nodes) {
+        sccs[node] = node;
     }
     // std::cout << "Current Node: " << currentNode.label << std::endl;
     int n = sccs.size();
@@ -594,7 +593,7 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
         child.dept = currentNode.dept + 1;
         currentNode.contains.insert(child.label);
         if (!single_node)
-            makeSccTreeInternals(sccEdges[node.first], child);
+            makeSccTreeInternals(sccEdges[node.first], node.second, child);
         else
             scc_tree_labels[node.second[0]] = label;
     }
@@ -623,7 +622,7 @@ void MaintainSCC::makeSccTree(std::vector<Edge> &edges, std::vector<long int> &n
     root.parent = label;
     root.dept = 0;
     // dPrint("SCC Tree Root: " + std::to_string(root.label));
-    makeSccTreeInternals(edges, root);
+    makeSccTreeInternals(edges, nodes, root);
 }
 
 void MaintainSCC::changeSccLabels(std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<long int>> &sccNodes)
@@ -1075,73 +1074,136 @@ void MaintainSCC::processMessage()
 MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
 {
     boost::mpi::communicator world;
+
     int world_rank = world.rank();
+    int max_threads = omp_get_max_threads();
+    int m = edges.size();
+
     world_size = world.size();
+    SCC_LABEL = n + 1 + world_rank;
 
-    if (world_rank == 0)
-    {
-        SCC_LABEL = n + 1;
-        sccs.reserve(n+1);
-        for (long int i = 1; i <= n; i++)
-            sccs[i] = i;
-        findScc(edges, sccs);
-
-        std::cout << "Done FIND SCC\n" << std::endl;
-
-        std::unordered_map<long int, std::vector<Edge>> sccEdges;
-        std::vector<Edge> inter_scc_edges;
-        divideEdgesByScc(edges, sccs, sccEdges, inter_scc_edges, true);
-
-        std::cout << "Done DIVIDE EDGES\n" << std::endl;
-
-        std::unordered_map<long int, std::vector<long int>> sccNodes;
-        for (auto &scc : sccs)
-        {
-            sccNodes[scc.second].push_back(scc.first);
-            which_rank[scc.first] = scc.second % (world.size() - 1) + 1;
-        }
-
-        std::cout << "Done DIVIDE NODES\n" << std::endl;
-
-        std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
-        std::cout << "Set of Edge: " << sccEdges.size() << std::endl;
-
-        for(int i = 1; i<world_size; i++) {
-            world.send(i, 0, MessageType::LABELS);
-            world.send(i, 1, SCC_LABEL+i);
-        }
-
-        for(auto &scc_edge: sccEdges) {
-            int to_rank = which_rank[scc_edge.second[0].from];
-            world.send(to_rank, 0, MessageType::SCC_TREE);
-            world.send(to_rank, 1, sccNodes[scc_edge.first]);
-            world.send(to_rank, 2, scc_edge.second);
-        }
-
-        // for(auto &scc_node: sccNodes) {
-        //     int to_rank = which_rank[scc_node.second[0]];
-        //     world.send(to_rank, 0, MessageType::SCC_TREE);
-        //     world.send(to_rank, 1, scc_node.second);
-        //     world.send(to_rank, 2, sccEdges[scc_node.first]);
-        // }
-
-        changeSccLabels(sccs, sccNodes);
-        constructMasterNode(edges, sccs);
-
-        std::cout << "Done CONSTRUCT MASTER NODE\n" << std::endl;
-
-        // wait for the completion of the process
-        boost::mpi::request req[world.size()];
-        STATUS status[world.size()];
-        for (int i = 1; i < world.size(); i++)
-        {
-            req[i] = world.irecv(i, 0, status[i]);
-        }
-        boost::mpi::wait_all(req + 1, req + world.size());
-        std::cout << "Done WAITING\n" << std::endl;
+    auto s = std::chrono::high_resolution_clock::now();
+    
+    for(int i = 1; i<=n; i++) {
+        sccs[i] = i;
     }
-    else
-        processMessage();
+
+    findScc(edges, sccs);
+
+    std::unordered_map<long int, std::vector<long int>> sccNodes;
+    for(const auto &scc: sccs) 
+        sccNodes[scc.second].push_back(scc.first);
+
+    changeSccLabels(sccs, sccNodes);
+
+    std::unordered_map<long int, std::vector<Edge>> sccEdges;
+    std::vector<Edge> inter_scc_edges;
+    divideEdgesByScc(edges, sccs, sccEdges, inter_scc_edges, true);
+
+    //update the sccNodes
+    sccNodes.clear();
+    for(const auto &scc: sccs) 
+        sccNodes[scc.second].push_back(scc.first);
+
+
+    std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
+
+    auto e = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = e - s;
+    std::cout << "Time Taken: " << diff.count() << std::endl;
+
+    s = std::chrono::high_resolution_clock::now();
+    int temp = 0;
+    //check and distribute the sccs
+    for(auto it = sccEdges.begin(); it != sccEdges.end(); it++) {
+        int scc_size = it->second.size();
+        if(scc_size > 0.1 * m) {
+            int to_rank = temp % (world_size - 1) + 1;
+            which_rank[it->first] = to_rank;
+            if(to_rank == world_rank){
+                std::cout << "Rank: " << world_rank << ", scc_size: " << scc_size << ", to_rank: " << to_rank << std::endl;
+                makeSccTree(it->second, sccNodes[it->first]);
+            }
+            temp++;
+        } else {
+            int to_rank = 0;
+            which_rank[it->first] = to_rank;
+            if(to_rank == world_rank)
+                makeSccTree(it->second, sccNodes[it->first]);
+        }
+    }
+
+    e = std::chrono::high_resolution_clock::now();
+    diff = e - s;
+    std::cout << "Rank: " << world_rank << ", Time Taken tree creation: " << diff.count() << std::endl;
+    std::cout << "Done Constructing SCC Tree" << std::endl;
+
+    world.barrier();
+
+    // if (world_rank == 0)
+    // {
+    //     SCC_LABEL = n + 1;
+    //     sccs.reserve(n+1);
+    //     for (long int i = 1; i <= n; i++)
+    //         sccs[i] = i;
+    //     findScc(edges, sccs);
+
+    //     std::cout << "Done FIND SCC\n" << std::endl;
+
+    //     std::unordered_map<long int, std::vector<Edge>> sccEdges;
+    //     std::vector<Edge> inter_scc_edges;
+    //     divideEdgesByScc(edges, sccs, sccEdges, inter_scc_edges, true);
+
+    //     std::cout << "Done DIVIDE EDGES\n" << std::endl;
+
+    //     std::unordered_map<long int, std::vector<long int>> sccNodes;
+    //     for (auto &scc : sccs)
+    //     {
+    //         sccNodes[scc.second].push_back(scc.first);
+    //         which_rank[scc.first] = scc.second % (world.size() - 1) + 1;
+    //     }
+
+    //     std::cout << "Done DIVIDE NODES\n" << std::endl;
+
+    //     std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
+    //     std::cout << "Set of Edge: " << sccEdges.size() << std::endl;
+
+    //     for(int i = 1; i<world_size; i++) {
+    //         world.send(i, 0, MessageType::LABELS);
+    //         world.send(i, 1, SCC_LABEL+i);
+    //     }
+
+    //     for(auto &scc_edge: sccEdges) {
+    //         int to_rank = which_rank[scc_edge.second[0].from];
+    //         world.send(to_rank, 0, MessageType::SCC_TREE);
+    //         world.send(to_rank, 1, sccNodes[scc_edge.first]);
+    //         world.send(to_rank, 2, scc_edge.second);
+    //     }
+
+    //     // for(auto &scc_node: sccNodes) {
+    //     //     int to_rank = which_rank[scc_node.second[0]];
+    //     //     world.send(to_rank, 0, MessageType::SCC_TREE);
+    //     //     world.send(to_rank, 1, scc_node.second);
+    //     //     world.send(to_rank, 2, sccEdges[scc_node.first]);
+    //     // }
+
+    //     changeSccLabels(sccs, sccNodes);
+    //     constructMasterNode(edges, sccs);
+
+    //     std::cout << "Done CONSTRUCT MASTER NODE\n" << std::endl;
+
+    //     // wait for the completion of the process
+    //     boost::mpi::request req[world.size()];
+    //     STATUS status[world.size()];
+    //     for (int i = 1; i < world.size(); i++)
+    //     {
+    //         req[i] = world.irecv(i, 0, status[i]);
+    //     }
+    //     boost::mpi::wait_all(req + 1, req + world.size());
+    //     std::cout << "Done WAITING\n" << std::endl;
+    // }
+    // else
+    //     processMessage();
 }
 
 void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)

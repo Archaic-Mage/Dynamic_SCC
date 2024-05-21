@@ -39,7 +39,7 @@ void dScc(const std::unordered_map<long int, long int> &sccs) {
 }
 
 void dTreeNode(const TreeNode &node) {
-    return;
+    // return;
     std::cout << "TreeNode: " << std::endl;
     std::cout << "Label: " << node.label << std::endl;
     std::cout << "Parent: " << node.parent << std::endl;
