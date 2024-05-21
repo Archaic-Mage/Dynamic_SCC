@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
   std::string filename = argv[2];
   std::ifstream file(filename);
 
-  for(int i = 0; i<4; i++) {
+  for(int i = 0; i<7; i++) {
     std::string tmp;
     getline(file, tmp);
   }
@@ -86,6 +86,13 @@ int main(int argc, char *argv[])
   auto s = std::chrono::high_resolution_clock::now();
   // this structrue is maintained by the master but is shared with all the workers
   SCC::MaintainSCC scc(n, edges);
+
+  world.barrier();
+  if(world.rank() == 0) {
+    auto e = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = e - s;
+    std::cout << "INIT: " << elapsed.count() << "s" << std::endl;
+  }
 
   // if(world.rank() == 0) {
   //   auto e = std::chrono::high_resolution_clock::now();

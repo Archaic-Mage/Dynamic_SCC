@@ -126,7 +126,7 @@ public:
      * relationship.
      * 
      */
-    std::unordered_map<Edge, Edge, EdgeHash>      corresponds_to;
+    std::vector<std::unordered_map<Edge, Edge, EdgeHash>>      corresponds_to;
     /**
      * @brief contains the nodes which are part of the current node in the SCC tree.
      * They store the label of the child nodes and is used to travese the tree downwards
@@ -215,6 +215,7 @@ public:
         label = -1;
         parent = -1;
         dept = 0;
+        corresponds_to.resize(omp_get_max_threads());
     }
 };
 

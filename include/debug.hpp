@@ -50,14 +50,16 @@ void dTreeNode(const TreeNode &node) {
     }
     std::cout << std::endl;
     std::cout << "Corresponds to: ";
-    for (auto &i : node.corresponds_to) {
-        std::cout << "(" << i.first.from << "->" << i.first.to << ", " << i.second.from << "->" << i.second.to << ") ";
-    }
+    int max_threads = omp_get_max_threads();
+    for(int i = 0; i<max_threads; i++)
+        for (auto &i : node.corresponds_to[i]) {
+            std::cout << "(" << i.first.from << "->" << i.first.to << ", " << i.second.from << "->" << i.second.to << ") ";
+        }
     std::cout << std::endl;
 }
 
 void dSccTree(const long int &root, const std::unordered_map<long int, TreeNode> &nodes) {
-    return;
+    // return;
     std::cout << "SCC Tree: " << std::endl;
     std::function<void(const TreeNode&, int)> dfs = [&](const TreeNode& node, int depth) {
         for (int i = 0; i < depth; i++) {
