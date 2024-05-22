@@ -21,6 +21,37 @@ void getGraph(std::ifstream &file ,std::vector<SCC::Edge> &edges, long int &n)
   }
 }
 
+void getUpdates(std::ifstream &file, std::vector<SCC::Edge> &decrement, std::vector<SCC::Edge> &increament)
+{
+  long int m;
+  file >> m;
+  for (long unsigned int i = 0; i < m; i++)
+  {
+    int type;
+    file >> type;
+    long int from, to;
+    file >> from >> to;
+    from++, to++;
+    if(type)
+      increament.emplace_back(from, to);
+    else
+      decrement.emplace_back(from, to);
+  }
+}
+
+void getQueries(std::ifstream &file, std::vector<std::pair<long int, long int>> &queries)
+{
+  long int m;
+  file >> m;
+  for (long unsigned int i = 0; i < m; i++)
+  {
+    long int from, to;
+    file >> from >> to;
+    from++, to++;
+    queries.emplace_back(from, to);
+  }
+}
+
 namespace mt = boost::mpi::threading;
 
 int main(int argc, char *argv[])
@@ -52,6 +83,10 @@ int main(int argc, char *argv[])
   }
   getGraph(file,edges, n);
 
+  // getUpdates(file, decrement, increament);
+
+  // getQueries(file, queries);
+
   if (world.rank() == 0)
   {
 
@@ -81,6 +116,8 @@ int main(int argc, char *argv[])
     std::cout << "STATIC: " << elapsed.count() << "s" << std::endl;
   }
 
+  boost::mpi::broadcast(world, decrement, 0);
+
   world.barrier();
 
   auto s = std::chrono::high_resolution_clock::now();
@@ -94,20 +131,44 @@ int main(int argc, char *argv[])
     std::cout << "INIT: " << elapsed.count() << "s" << std::endl;
   }
 
-  // if(world.rank() == 0) {
-  //   auto e = std::chrono::high_resolution_clock::now();
-  //   std::chrono::duration<double> elapsed = e - s;
-  //   std::cout << "INIT: " << elapsed.count() << "s" << std::endl;
+  world.barrier();
+  int num_of_sccs = scc.getNumberOfSCCs();
+  if(world.rank() == 0) {
+    std::cout << "Number of SCCs: " << num_of_sccs << std::endl;
+  }
 
-  //   s = std::chrono::high_resolution_clock::now();
-  //   // sending the updates to all the workers
-  //   scc.deleteEdges(decrement);
-  //   e = std::chrono::high_resolution_clock::now();
-  //   elapsed = e - s;
-  //   std::cout << "UPDATES: " << elapsed.count() << "s" << std::endl;
+
+  world.barrier();
+  s = std::chrono::high_resolution_clock::now();
+  // sending the updates to all the workers
+  scc.deleteEdges(decrement);
+  world.barrier();
+  // scc.insertEdges(increament);
+  // world.barrier();
+  if(world.rank() == 0) {
+    auto e = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = e - s;
+    std::cout << "UPDATES: " << elapsed.count() << "s" << std::endl;
+  }
+
+  world.barrier();
+
+  // std::vector<bool> ans;
+  // for(auto &i : queries) {
+  //   ans.push_back(scc.query(i.first, i.second));
   // }
-
-
+  // world.barrier();
+  // if(world.rank() == 0) {
+  //   std::ofstream out("output.tmp");
+  //   for(const auto &val: ans) {
+  //     if(val) {
+  //       out << "YES" << std::endl;
+  //     } else {
+  //       out << "NO" << std::endl;
+  //     }
+  //   }
+  // }
+  // world.barrier();
   return 0;
 }
 

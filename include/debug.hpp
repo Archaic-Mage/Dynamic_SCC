@@ -3,28 +3,39 @@
 #include "graph.hpp"
 #include <boost/mpi.hpp>
 
+// Debug flag
+#ifndef NDEBUG
+#define DEBUG true
+#endif
+
+#ifdef NDEBUG
+#define DEBUG false
+#endif
+
+
+
 using namespace SCC;
 //printing some information with format strings
 void dInfo(const boost::mpi::communicator& world, std::string message) {
-    return;
+    if(!DEBUG) return;
     std::cout << "Rank " << world.rank() << ": " << message << std::endl;
 }
 
 // print Message
 void dPrint(const std::string &message) {
-    return;
+    if(!DEBUG) return;
     std::cout << message << std::endl;
 }
 
 // print Edge
 void dEdge(const Edge &edge) {
-    return;
+    if(!DEBUG) return;
     std::cout << "Edge: " << edge.from << "->" << edge.to << std::endl;
 }
 
 // Print SCC
 void dScc(const std::unordered_map<long int, long int> &sccs) {
-    return;
+    if(!DEBUG) return;
     std::unordered_map<long int, std::vector<long int>> scc;
     for (auto &i : sccs) {
         scc[i.second].push_back(i.first);
@@ -39,7 +50,7 @@ void dScc(const std::unordered_map<long int, long int> &sccs) {
 }
 
 void dTreeNode(const TreeNode &node) {
-    // return;
+    if(!DEBUG) return;
     std::cout << "TreeNode: " << std::endl;
     std::cout << "Label: " << node.label << std::endl;
     std::cout << "Parent: " << node.parent << std::endl;
@@ -59,7 +70,7 @@ void dTreeNode(const TreeNode &node) {
 }
 
 void dSccTree(const long int &root, const std::unordered_map<long int, TreeNode> &nodes) {
-    // return;
+    if(!DEBUG) return;
     std::cout << "SCC Tree: " << std::endl;
     std::function<void(const TreeNode&, int)> dfs = [&](const TreeNode& node, int depth) {
         for (int i = 0; i < depth; i++) {

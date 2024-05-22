@@ -332,35 +332,29 @@ class MaintainSCC {
 
     int getLabel();
     int getSplitNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
-    void traverseNode(int node, std::unordered_map<long int, long int> &new_sccs);
+    void traverseNode(int node, int to_set, std::unordered_map<long int, long int> &new_sccs);
     void splitGraphOnNode(std::vector<Edge> &edges, long int node);
     void divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, 
                     std::unordered_map<long int, std::vector<Edge>> &sccEdges, std::vector<Edge> &inter_scc_edges, bool split);
     void makeSccTreeInternals(std::vector<Edge> &edge, std::vector<long int> &nodes, TreeNode &currentNode);
-    void makeSccTree(std::vector<Edge> &edges, std::vector<long int> &nodes);
+    void makeSccTree(std::vector<Edge> &edges, std::vector<long int> &nodes, int label);
     void changeSccLabels(std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<long int>> &sccNodes);
     void constructMasterNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
-    void updateMasterNode(int type, std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
+    void updateMasterNode();
     int checkAndRemoveUnreachable(TreeNode &curr_node);
-    int checkAndDetachUnreachable(TreeNode &root_node);
     int getLCANode(int node1, int node2);
     void deleteEdge(Edge edge);
-    bool clearDeleteCache(TreeNode &node);
     void deleteEdgeFromMaster(Edge edge);
-    void insertEdgesInMaster(std::vector<Edge> &edges);
+    void insertEdgeInMaster(Edge edge);
     void insertEdge(Edge edge);
-    void clearInsertCache(TreeNode &node);
-    void processMessage();
 
 public:
     bool query(long int v1, long int v2);
     void deleteEdges(std::vector<Edge> &decrement);
     void insertEdges(std::vector<Edge> &increament);
-    int getNumberOfSCCs() { return scc_tree_nodes[0].contains.size(); }
-    void endAll();
+    int getNumberOfSCCs();
 
     MaintainSCC(long int n, std::vector<Edge> &edges);
-    ~MaintainSCC();
 };
 
 }
