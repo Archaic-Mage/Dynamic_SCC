@@ -100,7 +100,6 @@ int main(int argc, char *argv[])
       std::swap(edges[k], edges[m-1]);
       m--;
     }
-    std::cout << "STATIC: 0" << std::endl;
   }
 
   boost::mpi::broadcast(world, decrement, 0);
