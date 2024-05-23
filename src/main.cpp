@@ -89,15 +89,7 @@ int main(int argc, char *argv[])
 
   if (world.rank() == 0)
   {
-
-    //static algorithm
-    auto s = std::chrono::high_resolution_clock::now();
-    std::unordered_map<long int, long int> sccs;
-    for (long int i = 0; i < n; i++)
-      sccs[i] = i;
-    SCC::findScc(edges, sccs);
-
-    // emulating the dynamic updates
+    // the dynamic updates
     float ratio = std::stof(argv[1]);
     int m = edges.size();
     int updates = m * ratio;
@@ -108,12 +100,7 @@ int main(int argc, char *argv[])
       std::swap(edges[k], edges[m-1]);
       m--;
     }
-
-    // emulating the re-run of the algorithm
-    SCC::findScc(edges, sccs);
-    auto e = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = e - s;
-    std::cout << "STATIC: " << elapsed.count() << "s" << std::endl;
+    std::cout << "STATIC: 0" << std::endl;
   }
 
   boost::mpi::broadcast(world, decrement, 0);
@@ -133,9 +120,9 @@ int main(int argc, char *argv[])
 
   world.barrier();
   int num_of_sccs = scc.getNumberOfSCCs();
-  if(world.rank() == 0) {
-    std::cout << "Number of SCCs: " << num_of_sccs << std::endl;
-  }
+  // if(world.rank() == 0) {
+  //   std::cout << "Number of SCCs: " << num_of_sccs << std::endl;
+  // }
 
 
   world.barrier();

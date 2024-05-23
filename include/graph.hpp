@@ -298,7 +298,7 @@ public:
 class MaintainSCC {
 
     const long int                          MOD = 1e10;
-    const int                               MAX_DEPT = 2;
+    const int                               MAX_DEPT = 5;
     long int                                SCC_LABEL = 0;
     int                                     world_size;
     std::vector<long int>                   roots;
@@ -341,6 +341,7 @@ class MaintainSCC {
     void changeSccLabels(std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<long int>> &sccNodes);
     void constructMasterNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs);
     void updateMasterNode();
+    bool clearDeleteCache();
     int checkAndRemoveUnreachable(TreeNode &curr_node);
     int getLCANode(int node1, int node2);
     void deleteEdge(Edge edge);

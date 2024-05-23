@@ -396,7 +396,7 @@ void TreeNode::checkUnreachable(std::unordered_set<long int> &unreachable)
         nwsccs[node] = node;
     findScc(edges, nwsccs);
     int split_on_label = nwsccs[split_on];
-    for (const auto &node : contains)
+    for (const auto &node : this->contains)
     {
         if (nwsccs[node] != split_on_label)
             unreachable.insert(node);
@@ -452,19 +452,31 @@ void TreeNode::exposeToParent(TreeNode &parent, std::unordered_set<long int> unr
 // traverse the Node and all the containing nodes
 void MaintainSCC::traverseNode(int node, int to_set, std::unordered_map<long int, long int> &update)
 {
-    std::queue<long int> q;
-    q.push(node);
-    while (!q.empty())
-    {
-        long int curr = q.front();
-        q.pop();
-        update[curr] = to_set;
-        for (auto &child : scc_tree_nodes[curr].contains)
-        {
-            if (child != curr)
-            {
-                q.push(child);
+    int max_threads = omp_get_max_threads();
+    std::vector<int> queue;
+    std::unordered_map<int,bool> in_next_queue;
+    std::vector<std::vector<int>> thread_queue(max_threads);
+    queue.push_back(node);
+    in_next_queue[node] = true;
+    while(!queue.empty()) {
+        #pragma omp parallel for num_threads(max_threads)
+        for(int v: queue) {
+            int tid = omp_get_thread_num();
+            update[v] = to_set;
+            for(auto &child : scc_tree_nodes[v].contains) {
+                if(!in_next_queue[child]) {
+                    thread_queue[tid].push_back(child);
+                    in_next_queue[child] = true;
+                }
             }
+        }
+        queue.clear();
+        for(int i = 0; i<max_threads; i++) {
+            for(int v: thread_queue[i]) {
+                queue.push_back(v);
+                in_next_queue[v] = false;
+            }
+            thread_queue[i].clear();
         }
     }
 }
@@ -761,8 +773,6 @@ void MaintainSCC::updateMasterNode()
         init_sccNodes[scc.second].push_back(scc.first);
     }
 
-    dScc(new_sccs);
-
     std::unordered_map<long int, long int> updated_labels;
     for(auto &scc: new_sccs) {
         if(init_sccNodes.find(scc.second) == init_sccNodes.end()) {
@@ -778,9 +788,6 @@ void MaintainSCC::updateMasterNode()
             sccs[scc.first] = scc.second;
         }
     }
-
-    dTreeNode(scc_tree_nodes[0]);
-    dScc(sccs);
 }
 
 int MaintainSCC::checkAndRemoveUnreachable(TreeNode &curr_node)
@@ -793,9 +800,6 @@ int MaintainSCC::checkAndRemoveUnreachable(TreeNode &curr_node)
     // if no unreachable nodes then return
     if (unreachable.empty())
         return 0;
-
-    for (auto &node : unreachable)
-        dPrint("Unreachable: " + std::to_string(node));
 
     // remove all unreachable nodes from the current node O(n)
     for (auto &unreachable_node : unreachable)
@@ -838,8 +842,6 @@ int MaintainSCC::checkAndRemoveUnreachable(TreeNode &curr_node)
         traverseNode(nd, nd, new_labels);
     }
 
-    for (auto &new_label : new_labels)
-        dPrint("New Label: " + std::to_string(new_label.first) + " -> " + std::to_string(new_label.second));
     // update the parent with the new labels
     parent.updateLabels(new_labels);
 
@@ -935,6 +937,30 @@ void MaintainSCC::insertEdge(Edge edge)
     insert_cache.insert({lca.dept, lca.label});
 }
 
+
+//clear the delete cache
+bool MaintainSCC::clearDeleteCache()
+{
+    bool new_scc = false;
+    int max_threads = omp_get_max_threads();
+
+    while (!delete_cache.empty())
+    {
+        Cache c = *delete_cache.begin();
+        delete_cache.erase(delete_cache.begin());
+        TreeNode &node = scc_tree_nodes.at(c.label);
+        dTreeNode(node);
+        if (checkAndRemoveUnreachable(node)) {
+            if(node.dept != 0)
+                delete_cache.insert({node.dept - 1, node.parent});
+            else
+                new_scc = true;
+        }
+    }
+
+    return new_scc;
+}
+
 // query if two nodes are in the same SCC
 bool MaintainSCC::query(long int v1, long int v2)
 {
@@ -1019,7 +1045,6 @@ void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
     int world_rank = world.rank();
     int max_threads = omp_get_max_threads();
 
-    auto s = std::chrono::high_resolution_clock::now();
     //assuming every core has access to decrement edges
     for(int i = 0; i<decrement.size(); i++) {
         if(sccs[decrement[i].from] == sccs[decrement[i].to]) {
@@ -1032,37 +1057,12 @@ void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
             deleteEdgeFromMaster(decrement[i]);
         }
     }
-    auto e = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diff = e-s;
-    std::cout << "Time taken to delete edges: " << diff.count() << "s" << std::endl;
 
-    s = std::chrono::high_resolution_clock::now();
-    bool new_scc = false;
-
-    while (!delete_cache.empty())
-    {
-        Cache c = *delete_cache.begin();
-        delete_cache.erase(delete_cache.begin());
-        TreeNode &node = scc_tree_nodes.at(c.label);
-        dTreeNode(node);
-        if (checkAndRemoveUnreachable(node)) {
-            if(node.dept != 0)
-                delete_cache.insert({node.dept - 1, node.parent});
-            else
-                new_scc = true;
-        }
-    }
-    e = std::chrono::high_resolution_clock::now();
-    diff = e-s;
-    std::cout << "Time taken to remove unreachable nodes: " << diff.count() << "s" << std::endl;
-
-    s = std::chrono::high_resolution_clock::now();
+    bool new_scc = clearDeleteCache();
+    
     if(new_scc) {
         updateMasterNode();
     }
-    e = std::chrono::high_resolution_clock::now();
-    diff = e-s;
-    std::cout << "Time taken to update master node: " << diff.count() << "s" << std::endl;
 
     world.barrier();
 }
