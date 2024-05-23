@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
   if(world.rank() == 0) {
     auto e = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = e - s;
-    std::cout << "UPDATES: " << elapsed.count() << "s" << std::endl;
+    std::cout << "UPD: " << elapsed.count() << "s" << std::endl;
   }
 
   world.barrier();
