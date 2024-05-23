@@ -452,33 +452,43 @@ void TreeNode::exposeToParent(TreeNode &parent, std::unordered_set<long int> unr
 // traverse the Node and all the containing nodes
 void MaintainSCC::traverseNode(int node, int to_set, std::unordered_map<long int, long int> &update)
 {
-    int max_threads = omp_get_max_threads();
-    std::vector<int> queue;
-    std::unordered_map<int,bool> in_next_queue;
-    std::vector<std::vector<int>> thread_queue(max_threads);
-    queue.push_back(node);
-    in_next_queue[node] = true;
-    while(!queue.empty()) {
-        #pragma omp parallel for num_threads(max_threads)
-        for(int v: queue) {
-            int tid = omp_get_thread_num();
-            update[v] = to_set;
-            for(auto &child : scc_tree_nodes[v].contains) {
-                if(!in_next_queue[child]) {
-                    thread_queue[tid].push_back(child);
-                    in_next_queue[child] = true;
-                }
-            }
-        }
-        queue.clear();
-        for(int i = 0; i<max_threads; i++) {
-            for(int v: thread_queue[i]) {
-                queue.push_back(v);
-                in_next_queue[v] = false;
-            }
-            thread_queue[i].clear();
+    std::queue<int> q;
+    q.push(node);
+    while(!q.empty()) {
+        int v = q.front();
+        q.pop();
+        update[v] = to_set;
+        for(auto &child : scc_tree_nodes[v].contains) {
+            if(v != child)
+                q.push(child);
         }
     }
+    // int max_threads = omp_get_max_threads();
+    // std::vector<int> queue;
+    // std::unordered_map<int,bool> in_next_queue;
+    // std::vector<std::vector<int>> thread_queue(max_threads);
+    // queue.push_back(node);
+    // in_next_queue[node] = true;
+    // while(!queue.empty()) {
+    //     #pragma omp parallel for num_threads(max_threads)
+    //     for(int v: queue) {
+    //         int tid = omp_get_thread_num();
+    //         update[v] = to_set;
+    //         for(auto &child : scc_tree_nodes[v].contains) {
+    //             if(!in_next_queue[child]) {
+    //                 thread_queue[tid].push_back(child);
+    //                 in_next_queue[child] = true;
+    //             }
+    //         }
+    //     }
+    //     queue.clear();
+    //     for(int i = 0; i<max_threads; i++) {
+    //         for(int v: thread_queue[i]) {
+    //             queue.push_back(v);
+    //         }
+    //         thread_queue[i].clear();
+    //     }
+    // }
 }
 
 // split a node's edges into two sets (node_in and node_out) creating new graph (O(m))
