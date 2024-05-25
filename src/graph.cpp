@@ -277,20 +277,6 @@ int MaintainSCC::getLabel()
     return ret;
 }
 
-void dfs(long int u, std::unordered_map<long int, std::vector<long int>> &adj, std::vector<long int> &order, std::unordered_map<long int, int> &visited)
-{
-    visited[u] = true;
-    for (long int v : adj[u])
-    {
-        if (!visited[v])
-        {
-            dfs(v, adj, order, visited);
-        }
-    }
-    order.push_back(u);
-}
-
-
 void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long int> &sccs) {
     int n = sccs.size();
     int m = edges.size();
@@ -354,127 +340,167 @@ void findScc(const std::vector<Edge>& edges, std::unordered_map<long int, long i
 void TreeNode::removeEdge(const Edge &edge)
 {
     //erase using key
-    corresponds_to.erase(edge);
+    int max_threads = omp_get_max_threads();
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<max_threads; i++) {
+        corresponds_to[i].erase(edge);
+    }
 }
 
 void TreeNode::condenseFill(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs)
 {
-    for (auto &edge : edges)
-    {
-        if (sccs[edge.from] != sccs[edge.to])
-        {
+    int max_threads = omp_get_max_threads();
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<edges.size(); i++) {
+        int tid = omp_get_thread_num();
+        if(sccs[edges[i].from] != sccs[edges[i].to]) {
             Edge e;
-            e.from = sccs[edge.from];
-            e.to = sccs[edge.to];
-            // removing the split node
-            if (edge.to < 0)
-                edge.to = -edge.to;
-            corresponds_to[edge] = e;
-            // corresponds_to.emplace_back(std::make_pair(edge, e));
+            e.from = sccs[edges[i].from];
+            e.to = sccs[edges[i].to];
+            if(edges[i].to < 0) {
+                edges[i].to = -edges[i].to;
+            }
+            corresponds_to[tid][edges[i]] = e;
         }
     }
 }
 
 void TreeNode::checkUnreachable(std::unordered_set<long int> &unreachable)
 {
+    int max_threads = omp_get_max_threads();
     // get edge list
     std::vector<Edge> edges;
+    std::vector<int> prev_edges_size(max_threads, 0);
+    for(int i = 1; i<max_threads; i++) {
+        prev_edges_size[i] = prev_edges_size[i-1] + corresponds_to[i-1].size();
+    }
+    int edges_size = prev_edges_size[max_threads-1] + corresponds_to[max_threads-1].size();
+    edges.resize(edges_size);
+
     long int split_on = -1;
-    for (auto edge : corresponds_to)
-    {
-        if (edge.second.to < 0)
-        {
-            split_on = -edge.second.to;
-            edge.second.to = split_on;
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<max_threads; i++) {
+        int j = prev_edges_size[i];
+        for(auto edge : corresponds_to[i]) {
+            if(edge.second.to < 0) {
+                split_on = -edge.second.to;
+                edge.second.to = split_on;
+            }
+            edges[j++] = edge.second;
         }
-        edges.emplace_back(edge.second);
     }
+
     // get the nodes in the current scc
-    std::unordered_map<long int, long int> sccs;
-    for (auto &node : contains)
+    std::unordered_map<long int, long int> nwsccs;
+    for (auto &node : this->contains)
+        nwsccs[node] = node;
+    findScc(edges, nwsccs);
+    int split_on_label = nwsccs[split_on];
+    for (const auto &node : this->contains)
     {
-        sccs[node] = node;
-    }
-    findScc(edges, sccs);
-    int split_on_label = sccs[split_on];
-    for (const auto &node : contains)
-    {
-        if (sccs[node] != split_on_label)
-        {
+        if (nwsccs[node] != split_on_label)
             unreachable.insert(node);
-        }
     }
 }
 
 void TreeNode::updateLabels(std::unordered_map<long int, long int> &new_labels)
 {
-    for (auto &correspond_to : corresponds_to)
-    {
-        Edge &label_edge = correspond_to.second;
-        const Edge &actual_edge = correspond_to.first;
+    int max_threads = omp_get_max_threads();
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<max_threads; i++) 
+        for (auto &correspond_to : corresponds_to[i])
+        {
+            Edge &label_edge = correspond_to.second;
+            const Edge &actual_edge = correspond_to.first;
 
-        if ( new_labels.find ( actual_edge.from ) != new_labels.end() )
-            label_edge.from = new_labels[actual_edge.from];
-        if ( new_labels.find ( actual_edge.to ) != new_labels.end() )
-            label_edge.to = new_labels[actual_edge.to];
-    }
+            if ( new_labels.find ( actual_edge.from ) != new_labels.end() )
+                label_edge.from = new_labels[actual_edge.from];
+            if ( new_labels.find ( actual_edge.to ) != new_labels.end() )
+                label_edge.to = new_labels[actual_edge.to];
+        }
 }
 
 void TreeNode::exposeToParent(TreeNode &parent, std::unordered_set<long int> unreachable)
 {
-    std::unordered_map<Edge, Edge, EdgeHash> temp;
-    for(auto &correspond_to: corresponds_to)
-    {
-        // std::pair<Edge, Edge> &correspond_to = corresponds_to.back();
-        // corresponds_to.pop_back();
-        if (unreachable.find(correspond_to.second.from) != unreachable.end() || unreachable.find(correspond_to.second.to) != unreachable.end())
+    int max_threads = omp_get_max_threads();
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i= 0; i<max_threads; i++) {
+        std::unordered_map<Edge, Edge, EdgeHash> temp;
+        for(auto &correspond_to: corresponds_to[i])
         {
-            if (unreachable.find(correspond_to.second.from) == unreachable.end())
+            if (unreachable.find(correspond_to.second.from) != unreachable.end() || unreachable.find(correspond_to.second.to) != unreachable.end())
             {
-                correspond_to.second.from = label;
+                if (unreachable.find(correspond_to.second.from) == unreachable.end())
+                {
+                    correspond_to.second.from = label;
+                }
+                if (unreachable.find(correspond_to.second.to) == unreachable.end())
+                {
+                    correspond_to.second.to = label;
+                }
+                parent.corresponds_to[i][correspond_to.first] = correspond_to.second;
             }
-            if (unreachable.find(correspond_to.second.to) == unreachable.end())
+            else
             {
-                correspond_to.second.to = label;
+                temp[correspond_to.first] = correspond_to.second;
             }
-            parent.corresponds_to[correspond_to.first] = correspond_to.second;
         }
-        else
-        {
-            temp[correspond_to.first] = correspond_to.second;
-        }
+        corresponds_to[i].swap(temp);
     }
-    corresponds_to.swap(temp);
 }
 
 // traverse the Node and all the containing nodes
-void MaintainSCC::traverseNode(int node, std::unordered_map<long int, long int> &sccs)
+void MaintainSCC::traverseNode(int node, int to_set, std::unordered_map<long int, long int> &update)
 {
-    std::queue<long int> q;
+    std::queue<int> q;
     q.push(node);
-    while (!q.empty())
-    {
-        long int curr = q.front();
+    while(!q.empty()) {
+        int v = q.front();
         q.pop();
-        sccs[curr] = node;
-        for (auto &child : scc_tree_nodes[curr].contains)
-        {
-            if (child != curr)
-            {
+        update[v] = to_set;
+        for(auto &child : scc_tree_nodes[v].contains) {
+            if(v != child)
                 q.push(child);
-            }
         }
     }
+    // int max_threads = omp_get_max_threads();
+    // std::vector<int> queue;
+    // std::unordered_map<int,bool> in_next_queue;
+    // std::vector<std::vector<int>> thread_queue(max_threads);
+    // queue.push_back(node);
+    // in_next_queue[node] = true;
+    // while(!queue.empty()) {
+    //     #pragma omp parallel for num_threads(max_threads)
+    //     for(int v: queue) {
+    //         int tid = omp_get_thread_num();
+    //         update[v] = to_set;
+    //         for(auto &child : scc_tree_nodes[v].contains) {
+    //             if(!in_next_queue[child]) {
+    //                 thread_queue[tid].push_back(child);
+    //                 in_next_queue[child] = true;
+    //             }
+    //         }
+    //     }
+    //     queue.clear();
+    //     for(int i = 0; i<max_threads; i++) {
+    //         for(int v: thread_queue[i]) {
+    //             queue.push_back(v);
+    //         }
+    //         thread_queue[i].clear();
+    //     }
+    // }
 }
 
 // split a node's edges into two sets (node_in and node_out) creating new graph (O(m))
 void MaintainSCC::splitGraphOnNode(std::vector<Edge> &edges, long int node)
 {
-    for (auto &edge : edges)
+    int max_threads = omp_get_max_threads();
+    #pragma omp parallel for num_threads(max_threads)
+    for (int i = 0; i<edges.size(); i++) 
     {
-        if (edge.to == node)
+        if (edges[i].to == node)
         {
-            edge.to = -node;
+            edges[i].to = -node;
         }
     }
 }
@@ -482,68 +508,106 @@ void MaintainSCC::splitGraphOnNode(std::vector<Edge> &edges, long int node)
 // Divide edges by groups based on SCCs (O(mlog(n)))
 void MaintainSCC::divideEdgesByScc(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<Edge>> &sccEdges, std::vector<Edge> &inter_scc_edges, bool split = false)
 {
-    for (auto &edge : edges)
+    int max_threads = omp_get_max_threads();
+    std::unordered_map<int, std::vector<std::vector<Edge>>> thread_scc_edges;
+    std::vector<std::vector<Edge>> thread_inter_scc_edges(max_threads);
+
+    for(auto it = sccs.begin(); it != sccs.end(); it++) {
+        thread_scc_edges[it->second].resize(max_threads);
+    }
+
+    #pragma omp parallel for num_threads(max_threads)
+    for (int i = 0; i<edges.size(); i++)
     {
-        if (sccs[edge.from] == sccs[edge.to])
+        int tid = omp_get_thread_num();
+        if (sccs[edges[i].from] == sccs[edges[i].to])
         {
-            sccEdges[sccs[edge.from]].push_back(edge);
+            thread_scc_edges[sccs[edges[i].from]][tid].push_back(edges[i]);
         } else if(split) {
-            inter_scc_edges.push_back(edge);
+            thread_inter_scc_edges[tid].push_back(edges[i]);
+        }
+    }
+
+    std::vector<int> prev_edges_size(max_threads, 0);
+    for(int i = 1; i<max_threads; i++) {
+        prev_edges_size[i] = prev_edges_size[i-1] + thread_inter_scc_edges[i-1].size();
+    }
+    int edges_size = prev_edges_size[max_threads-1] + thread_inter_scc_edges[max_threads-1].size();
+    inter_scc_edges.resize(edges_size);
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<max_threads; i++) {
+        int j = prev_edges_size[i];
+        for(auto edge: thread_inter_scc_edges[i]) {
+            inter_scc_edges[j++] = edge;
+        }
+    }
+
+    for(auto &scc_edges: thread_scc_edges) {
+        for(int i = 1; i<max_threads; i++) {
+            prev_edges_size[i] = prev_edges_size[i-1] + scc_edges.second[i-1].size();
+        }
+        edges_size = prev_edges_size[max_threads-1] + scc_edges.second[max_threads-1].size();
+        sccEdges[scc_edges.first].resize(edges_size);
+        #pragma omp parallel for num_threads(max_threads)
+        for(int i = 0; i<max_threads; i++) {
+            int j = prev_edges_size[i];
+            for(auto edge: scc_edges.second[i]) {
+                sccEdges[scc_edges.first][j++] = edge;
+            }
         }
     }
 }
 
 int MaintainSCC::getSplitNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs)
 {
-    int n = sccs.size();
-    int m = edges.size();
-    int max_threads = omp_get_max_threads();
-    std::unordered_map<int , int> label_hash;
-    std::vector<int> label_unhash(sccs.size(), 0);
-    for(const auto &[node, _]: sccs) {
-        label_hash[node] = label_hash.size();
-        label_unhash[label_hash.size()-1] = node;
-    }
-    std::vector<int> in_degree(sccs.size(), 0);
-    std::vector<int> out_degree(sccs.size(), 0);
-    #pragma omp parallel for num_threads(max_threads)
-    for(int i = 0; i<m; i++) {
-        out_degree[label_hash[sccs[edges[i].from]]]++;
-        in_degree[label_hash[sccs[edges[i].to]]]++;
-    }
+    // int n = sccs.size();
+    // int m = edges.size();
+    // int max_threads = omp_get_max_threads();
+    // std::unordered_map<int , int> label_hash;
+    // std::vector<int> label_unhash(sccs.size(), 0);
+    // for(const auto &[node, _]: sccs) {
+    //     label_hash[node] = label_hash.size();
+    //     label_unhash[label_hash.size()-1] = node;
+    // }
+    // std::vector<int> in_degree(sccs.size(), 0);
+    // std::vector<int> out_degree(sccs.size(), 0);
+    // #pragma omp parallel for num_threads(max_threads)
+    // for(int i = 0; i<m; i++) {
+    //     out_degree[label_hash[sccs[edges[i].from]]]++;
+    //     in_degree[label_hash[sccs[edges[i].to]]]++;
+    // }
 
-    int deg_mul = 0, pivot = 0;
-    #pragma omp parallel for num_threads(max_threads) reduction(max:deg_mul)
-    for (int i = 0; i < sccs.size(); i++)
-    {
-        deg_mul = std::max(deg_mul, in_degree[i] * out_degree[i]);
-    }
-    #pragma omp parallel for num_threads(max_threads)
-    for(int i = 0; i<n; i++) {
-        if(in_degree[i]*out_degree[i] == deg_mul) {
-            pivot = label_unhash[i];
-        }
-    }
+    // int deg_mul = 0, pivot = 0;
+    // #pragma omp parallel for num_threads(max_threads) reduction(max:deg_mul)
+    // for (int i = 0; i < sccs.size(); i++)
+    // {
+    //     deg_mul = std::max(deg_mul, in_degree[i] * out_degree[i]);
+    // }
+    // #pragma omp parallel for num_threads(max_threads)
+    // for(int i = 0; i<n; i++) {
+    //     if(in_degree[i]*out_degree[i] == deg_mul) {
+    //         pivot = label_unhash[i];
+    //     }
+    // }
+    int pivot = edges[0].from;
     return pivot;
 }
 
 /*** Functions to make SCC Tree ***/
-void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &currentNode)
+void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, std::vector<long int> &nodes, TreeNode &currentNode)
 {
-
-    // O(m + n)
     // actual node -> temp label
     std::unordered_map<long int, long int> sccs;
-    for(auto &[from, to] : edge) {
-        sccs[from] = from;
-        sccs[to] = to;
+    for(auto &node: nodes) {
+        sccs[node] = node;
     }
-    // std::cout << "Current Node: " << currentNode.label << std::endl;
+
     int n = sccs.size();
     int m = edge.size();
     int max_threads = omp_get_max_threads();
 
     scc_tree_labels[currentNode.label] = currentNode.label;
+
 
     //get split on vertex (we choose vertex with highest degree (total))
     long int split_on = getSplitNode(edge, sccs);
@@ -559,12 +623,14 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
         for(auto &node: sccs) {
             if(node.first == -split_on) continue;
             scc_tree_labels[node.first] = currentNode.label;
+            currentNode.contains.insert(node.first);
         }
         currentNode.condenseFill(edge, sccs);
         return;
     }
 
     findScc(edge, sccs);
+
 
     // O(m)
     // temp label -> edges in scc
@@ -594,7 +660,7 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
         child.dept = currentNode.dept + 1;
         currentNode.contains.insert(child.label);
         if (!single_node)
-            makeSccTreeInternals(sccEdges[node.first], child);
+            makeSccTreeInternals(sccEdges[node.first], node.second, child);
         else
             scc_tree_labels[node.second[0]] = label;
     }
@@ -604,11 +670,12 @@ void MaintainSCC::makeSccTreeInternals(std::vector<Edge> &edge, TreeNode &curren
 }
 
 // Construct the SCC tree
-void MaintainSCC::makeSccTree(std::vector<Edge> &edges, std::vector<long int> &nodes)
+void MaintainSCC::makeSccTree(std::vector<Edge> &edges, std::vector<long int> &nodes, int label)
 {
     // case when only one node is present in the scc
     if (nodes.size() == 1)
     {
+        roots.push_back(label);
         TreeNode &root = scc_tree_nodes[nodes[0]];
         root.label = nodes[0];
         root.parent = nodes[0];
@@ -616,14 +683,12 @@ void MaintainSCC::makeSccTree(std::vector<Edge> &edges, std::vector<long int> &n
         return;
     }
     // Create a TreeNode
-    int label = getLabel();
     roots.push_back(label);
     TreeNode &root = scc_tree_nodes[label];
     root.label = label;
     root.parent = label;
     root.dept = 0;
-    // dPrint("SCC Tree Root: " + std::to_string(root.label));
-    makeSccTreeInternals(edges, root);
+    makeSccTreeInternals(edges, nodes, root);
 }
 
 void MaintainSCC::changeSccLabels(std::unordered_map<long int, long int> &sccs, std::unordered_map<long int, std::vector<long int>> &sccNodes)
@@ -646,22 +711,24 @@ void MaintainSCC::changeSccLabels(std::unordered_map<long int, long int> &sccs, 
 // Construct Master Node
 void MaintainSCC::constructMasterNode(std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs)
 {
+    int max_threads = omp_get_max_threads();
     // Create a TreeNode
     int label = 0;
     roots.push_back(label);
     TreeNode &root = scc_tree_nodes[label];
     root.label = label;
     root.parent = label;
-    root.dept = 0;
-    for (const auto &edge : edges)
+    root.dept = -1;
+    #pragma omp parallel for num_threads(max_threads)
+    for (int i = 0; i<edges.size(); i++)
     {
-        if (sccs[edge.from] != sccs[edge.to])
+        int tid = omp_get_thread_num();
+        if (sccs[edges[i].from] != sccs[edges[i].to])
         {
             Edge e;
-            e.from = sccs[edge.from];
-            e.to = sccs[edge.to];
-            root.corresponds_to[edge] = e;
-            // root.corresponds_to.emplace_back(std::make_pair(edge, e));
+            e.from = sccs[edges[i].from];
+            e.to = sccs[edges[i].to];
+            root.corresponds_to[tid][edges[i]] = e;
         }
     }
     for (auto &scc : sccs)
@@ -671,46 +738,72 @@ void MaintainSCC::constructMasterNode(std::vector<Edge> &edges, std::unordered_m
 }
 
 // update master node 0-new scc creation
-void MaintainSCC::updateMasterNode(int type, std::vector<Edge> &edges, std::unordered_map<long int, long int> &sccs)
+void MaintainSCC::updateMasterNode()
 {
-    if (type == 0)
-    {
-        for (auto &correspond_to : scc_tree_nodes[0].corresponds_to)
-        {
-            const Edge &actual_edge = correspond_to.first;
-            Edge &label_edge = correspond_to.second;
-            long int from = actual_edge.from;
-            if (sccs.find(from) != sccs.end())
-            {
-                label_edge.from = sccs[from];
-            }
-            long int to = actual_edge.to;
-            if (sccs.find(to) != sccs.end())
-            {
-                label_edge.to = sccs[to];
+    int max_threads = omp_get_max_threads();
+    //re-run the scc algorithm on the master node
+
+    //1 - get the edges from the master node
+    std::vector<Edge> edges;
+    std::vector<int> prev_edges_size(max_threads, 0);
+    int edges_size = 0;
+    for(int i = 1; i<max_threads; i++) {
+        prev_edges_size[i] = prev_edges_size[i-1] + scc_tree_nodes[0].corresponds_to[i-1].size();
+    }
+    edges_size = prev_edges_size[max_threads-1] + scc_tree_nodes[0].corresponds_to[max_threads-1].size();
+    edges.resize(edges_size);
+    #pragma omp parallel for num_threads(max_threads)
+    for(int i = 0; i<max_threads; i++) {
+        int j = prev_edges_size[i];
+        for(auto &correspond_to: scc_tree_nodes[0].corresponds_to[i]) {
+            edges[j++] = correspond_to.second;
+        }
+    }
+
+    //2 - get the nodes from the master node
+    std::unordered_map<long int, long int> new_sccs;
+    for(auto &node: scc_tree_nodes[0].contains) {
+        new_sccs[node] = node;
+    }
+
+    //3 - run the scc algorithm
+    findScc(edges, new_sccs);
+
+    //4 - divide the nodes based on the new sccs formed
+    std::unordered_map<long int, std::vector<long int>> sccNodes;
+    for(auto &scc: new_sccs) {
+        sccNodes[scc.second].push_back(scc.first);
+    }
+
+    //5 - change the sccs mappings to labels
+    changeSccLabels(new_sccs, sccNodes);
+
+    std::unordered_map<long int, std::vector<long int>> init_sccNodes;
+    for(auto &scc: sccs) {
+        init_sccNodes[scc.second].push_back(scc.first);
+    }
+
+    std::unordered_map<long int, long int> updated_labels;
+    for(auto &scc: new_sccs) {
+        if(init_sccNodes.find(scc.second) == init_sccNodes.end()) {
+            traverseNode(scc.first, scc.second, updated_labels);
+            for(auto &nd: init_sccNodes[scc.first]) {
+                updated_labels[nd] = scc.second;
             }
         }
-        for (const auto &edge : edges)
-        {
-            if (sccs[edge.from] != sccs[edge.to])
-            {
-                Edge e;
-                e.from = sccs[edge.from];
-                e.to = sccs[edge.to];
-                scc_tree_nodes[0].corresponds_to[edge] = e;
-                // scc_tree_nodes[0].corresponds_to.emplace_back(std::make_pair(edge, e));
-            }
-        }
-        for (auto &scc : sccs)
-        {
-            scc_tree_nodes[0].contains.insert(scc.second);
+    }
+
+    for(auto &scc: updated_labels) {
+        if(sccs.find(scc.first) != sccs.end()) {
+            sccs[scc.first] = scc.second;
         }
     }
 }
 
 int MaintainSCC::checkAndRemoveUnreachable(TreeNode &curr_node)
 {
-    // do unreachability and reachability checks
+    int max_threads = omp_get_max_threads();
+    // do unreachability and reachability checks O(n+m)
     std::unordered_set<long int> unreachable;
     curr_node.checkUnreachable(unreachable);
 
@@ -718,93 +811,54 @@ int MaintainSCC::checkAndRemoveUnreachable(TreeNode &curr_node)
     if (unreachable.empty())
         return 0;
 
-    for (auto &node : unreachable)
-    {
-        dPrint("Unreachable: " + std::to_string(node));
-    }
-
-    // remove all unreachable nodes from the current node
+    // remove all unreachable nodes from the current node O(n)
     for (auto &unreachable_node : unreachable)
-    {
         curr_node.contains.erase(unreachable_node);
-    }
+
     // add the unreachable nodes to the parent
-    TreeNode &parent = scc_tree_nodes.at(curr_node.parent);
-    // change parent label of unreachable nodes
+    int parent_label = curr_node.parent;
+    if(curr_node.dept == 0) parent_label = 0;
+    TreeNode &parent = scc_tree_nodes.at(parent_label);
+    // change parent label of unreachable nodes O(n)
     for (auto &unreachable_node : unreachable)
     {
         scc_tree_nodes[unreachable_node].parent = parent.label;
+        scc_tree_labels[unreachable_node] = parent.label;
         parent.contains.insert(unreachable_node);
     }
+
     std::unordered_map<long int, long int> new_labels;
     if (curr_node.contains.size() == 1)
     {
         long int new_label = *(curr_node.contains.begin());
         parent.contains.erase(curr_node.label);
-        for(auto &edge_pair: parent.corresponds_to) {
-            Edge &label_edge = edge_pair.second;
-            if(label_edge.from == curr_node.label) {
-                label_edge.from = new_label;
+        #pragma omp parallel for num_threads(max_threads)
+        for(int i = 0; i<max_threads; i++)
+            for(auto &edge_pair: parent.corresponds_to[i]) {
+                Edge &label_edge = edge_pair.second;
+                if(label_edge.from == curr_node.label) {
+                    label_edge.from = new_label;
+                }
+                if(label_edge.to == curr_node.label) {
+                    label_edge.to = new_label;
+                }
             }
-            if(label_edge.to == curr_node.label) {
-                label_edge.to = new_label;
-            }
-        }
         curr_node.label = new_label;
+        scc_tree_labels[new_label] = parent.label;
         parent.contains.insert(new_label);
     }
+
     for(const auto &nd: unreachable) {
-        traverseNode(nd, new_labels);
+        traverseNode(nd, nd, new_labels);
     }
-    for (auto &new_label : new_labels)
-    {
-        dPrint("New Label: " + std::to_string(new_label.first) + " -> " + std::to_string(new_label.second));
-    }
-    dTreeNode(parent);
+
     // update the parent with the new labels
     parent.updateLabels(new_labels);
 
     // exposing internal structure to parent node
     curr_node.exposeToParent(parent, unreachable);
+
     return 1;
-}
-
-int MaintainSCC::checkAndDetachUnreachable(TreeNode &root_node)
-{
-    boost::mpi::communicator world;
-    std::unordered_set<long int> unreachable;
-    root_node.checkUnreachable(unreachable);
-    if (unreachable.empty())
-    {
-        return 0;
-    }
-    for (auto &node : unreachable)
-    {
-        dPrint("Unreachable: " + std::to_string(node));
-    }
-    for (auto &unreachable_node : unreachable)
-    {
-        root_node.contains.erase(unreachable_node);
-    }
-    TreeNode temp;
-    root_node.exposeToParent(temp, unreachable);
-    std::vector<Edge> edges;
-    for (auto &correspond_to : temp.corresponds_to)
-    {
-        edges.emplace_back(correspond_to.first);
-    }
-    std::unordered_map<long int, long int> new_sccs;
-    for (auto &unreachable_node : unreachable)
-    {
-        roots.push_back(unreachable_node);
-        traverseNode(unreachable_node, new_sccs);
-    }
-    // transfer to master node for creating new scc
-    world.send(0, 0, STATUS::DONE_NEW);
-    world.send(0, 1, edges);
-    world.send(0, 2, new_sccs);
-
-    return 0;
 }
 
 /*** Functions to update the graph ***/
@@ -837,12 +891,6 @@ void MaintainSCC::deleteEdge(Edge edge)
     delete_cache.insert({lca.dept, lca.label});
 }
 
-bool MaintainSCC::clearDeleteCache(TreeNode &node)
-{
-    if (node.dept != 0)
-        return checkAndRemoveUnreachable(node);
-    return checkAndDetachUnreachable(node);
-}
 
 void MaintainSCC::deleteEdgeFromMaster(Edge edge)
 {
@@ -850,44 +898,21 @@ void MaintainSCC::deleteEdgeFromMaster(Edge edge)
     root.removeEdge(edge);
 }
 
-void MaintainSCC::insertEdgesInMaster(std::vector< Edge > &edges) 
+void MaintainSCC::insertEdgeInMaster(Edge edge)
 {
     TreeNode &root = scc_tree_nodes[0];
-    for(auto &edge : edges) {
-        Edge label_edge(sccs[edge.from], sccs[edge.to]);
-        root.corresponds_to[edge] = label_edge;
-        // root.corresponds_to.emplace_back(std::make_pair(edge, label_edge));
-    }
-    edges.clear();
-    // filling the edges for computing sccs
-    for(const auto &correspond_to: root.corresponds_to)
-        edges.emplace_back(correspond_to.second);
-    std::unordered_map<long int, long int> sccs;
-    for(const auto &node: root.contains)
-        sccs[node] = node;
-    findScc(edges, sccs);
-
-    dScc(sccs);
-    dTreeNode(root);
-    std::unordered_map<long int, std::vector<long int>> sccNodes;
-    for(auto &scc: sccs)
-        sccNodes[scc.second].push_back(scc.first);
-    std::unordered_map<long int, long int> actual_node;
-    //dividing the edges based on the new sccs formed (restrucring the root master node)
-    std::unordered_map<long int, std::vector<std::pair<const Edge, Edge>>> new_scc_root;
-    std::unordered_map<Edge, Edge, EdgeHash> temp;
-    for(auto &correspond_to: root.corresponds_to) {
-        // std::pair<Edge, Edge> &correspond_to = root.corresponds_to.end();
-        // root.corresponds_to.pop_back();
-        actual_node[correspond_to.second.from] = correspond_to.first.from;
-        actual_node[correspond_to.second.to] = correspond_to.first.to;
-        if(sccs[correspond_to.second.from] == sccs[correspond_to.second.to]) {
-            new_scc_root[sccs[correspond_to.second.from]].emplace_back(correspond_to);
-        } else {
-            temp.emplace_hint(temp.end(), correspond_to.first, correspond_to.second);
+    Edge label_edge(sccs[edge.from], sccs[edge.to]);
+    int min_thread = 0;
+    int min_thread_size = INT_MAX;
+    for (int i = 0; i < omp_get_max_threads(); i++)
+    {
+        if (root.corresponds_to[i].size() < min_thread_size)
+        {
+            min_thread = i;
+            min_thread_size = root.corresponds_to[i].size();
         }
     }
-    root.corresponds_to.swap(temp);
+    root.corresponds_to[min_thread][edge] = label_edge;
 }
 
 // INSERT EDGE
@@ -905,361 +930,183 @@ void MaintainSCC::insertEdge(Edge edge)
         label_to = scc_tree_nodes[label_to].parent;
     }
     Edge e(label_from, label_to);
+
+    int min_thread = 0;
+    int min_thread_size = INT_MAX;
+    for (int i = 0; i < omp_get_max_threads(); i++)
+    {
+        if (lca.corresponds_to[i].size() < min_thread_size)
+        {
+            min_thread = i;
+            min_thread_size = lca.corresponds_to[i].size();
+        }
+    }
     // add the edge to the lca
-    lca.corresponds_to[edge] = e;
+    lca.corresponds_to[min_thread][edge] = e;
     // add the lca to the insert cache
     insert_cache.insert({lca.dept, lca.label});
 }
 
-void MaintainSCC::clearInsertCache(TreeNode &node)
+
+//clear the delete cache
+bool MaintainSCC::clearDeleteCache()
 {
-    std::vector<Edge> edges;
-    for (auto &correspond_to : node.corresponds_to)
-        edges.emplace_back(correspond_to.second);
+    bool new_scc = false;
+    int max_threads = omp_get_max_threads();
 
-    std::unordered_map<long int, long int> sccs;
-    for (auto &node : node.contains)
-        sccs[node] = node;
-    findScc(edges, sccs);
-
-    std::unordered_map<long int, std::vector<long int>> sccNodes;
-    for (auto &scc : sccs)
-        sccNodes[scc.second].push_back(scc.first);
-
-    bool to_end = true;
-    for (auto &scc_nodes : sccNodes)
-        if (scc_nodes.second.size() > 1)
-            to_end = false;
-    if (to_end)
-        return;
-
-    changeSccLabels(sccs, sccNodes);
-
-    sccNodes.clear();
-    for (auto &scc : sccs)
-        sccNodes[scc.second].push_back(scc.first);
-
-    std::vector<long int> new_tree_nodes;
-    std::unordered_map<long int, long int> split_on;
-    for (auto &scc : sccs)
+    while (!delete_cache.empty())
     {
-        if (scc.second < 0)
-            continue;
-        if (scc_tree_nodes.find(scc.second) == scc_tree_nodes.end())
-        {
-            TreeNode &child = scc_tree_nodes[scc.second];
-            child.label = scc.second;
-            child.parent = node.label;
-            child.dept = node.dept + 1;
-            child.contains.insert(sccNodes[scc.second].begin(), sccNodes[scc.second].end());
-            split_on[scc.second] = sccNodes[scc.second][0];
-            new_tree_nodes.push_back(child.label);
+        Cache c = *delete_cache.begin();
+        delete_cache.erase(delete_cache.begin());
+        TreeNode &node = scc_tree_nodes.at(c.label);
+        dTreeNode(node);
+        if (checkAndRemoveUnreachable(node)) {
+            if(node.dept != 0)
+                delete_cache.insert({node.dept - 1, node.parent});
+            else
+                new_scc = true;
         }
     }
 
-    std::unordered_map<Edge, Edge, EdgeHash> temp;
-    for(auto &correspond_to: node.corresponds_to)
-    {
-        // std::pair<Edge, Edge> &correspond_to = node.corresponds_to.back();
-        // node.corresponds_to.pop_back();
-        int scc_label_from = sccs[correspond_to.second.from], scc_label_to = sccs[correspond_to.second.to];
-        if (scc_label_from != scc_label_to)
-            temp[correspond_to.first] = correspond_to.second;
-        else {
-            if(correspond_to.second.to == split_on[scc_label_to])
-                correspond_to.second.to = -correspond_to.second.to;
-            scc_tree_nodes[sccs[correspond_to.second.from]].corresponds_to[correspond_to.first] = correspond_to.second;
-        }
-    }
-    node.corresponds_to.swap(temp);
-
-    // changing connections in node
-    for (auto &correspond_to : node.corresponds_to)
-    {
-        Edge &label_edge = correspond_to.second;
-        const Edge &actual_edge = correspond_to.first;
-        label_edge.from = sccs[label_edge.from];
-        label_edge.to = sccs[label_edge.to];
-    }
-
-    // update the contains set
-    node.contains.clear();
-    for (auto &scc : sccs)
-    {
-        if (scc.second < 0)
-            continue;
-        node.contains.insert(scc.second);
-    }
-    for (auto &new_tree_node : new_tree_nodes)
-    {
-        TreeNode &child = scc_tree_nodes[new_tree_node];
-        insert_cache.insert({child.dept, child.label});
-    }
+    return new_scc;
 }
 
 // query if two nodes are in the same SCC
 bool MaintainSCC::query(long int v1, long int v2)
 {
-    return sccs[v1] == sccs[v2];
-}
-
-void MaintainSCC::processMessage()
-{
     boost::mpi::communicator world;
-    MessageType type;
-    while (true)
-    {
-        world.recv(0, 0, type);
-        if (type == MessageType::EXIT)
-            break;
-        else if(type == MessageType::LABELS) {
-            world.recv(0, 1, SCC_LABEL);
-        }
-        else if (type == MessageType::SCC_TREE)
-        {
-            std::vector<long int> nodes;
-            std::vector<Edge> edgeList;
-            world.recv(0, 1, nodes);
-            world.recv(0, 2, edgeList);
-            makeSccTree(edgeList, nodes);
-            world.send(0, 0, STATUS::DONE_NO_NEW);
-        }
-        else if (type == MessageType::EDGE_DELETE)
-        {
-            Edge edge;
-            world.recv(0, 1, edge);
-            // std::cout << "Deleting Edge: " << edge.from << " " << edge.to << std::endl;
-            deleteEdge(edge);
-            // std::cout << "Deleted Edge: " << edge.from << " " << edge.to << std::endl;
-        }
-        else if (type == MessageType::CLR_DEC_CACHE)
-        {
-            // std::cout << "Clearing Delete Cache : " << world.rank() << std::endl;
-            while (!delete_cache.empty())
-            {
-                Cache c = *delete_cache.begin();
-                delete_cache.erase(delete_cache.begin());
-                TreeNode &node = scc_tree_nodes.at(c.label);
-                dTreeNode(node);
-                if (clearDeleteCache(node))
-                {
-                    delete_cache.insert({node.dept - 1, node.parent});
-                }
-            }
-            world.send(0, 0, STATUS::DONE_NO_NEW);
-            // std::cout << "Cleared Delete Cache : " << world.rank() << std::endl;
-        }
-        else if (type == MessageType::EDGE_INSERT)
-        {
-            Edge edge;
-            world.recv(0, 1, edge);
-            // std::cout << "Inserted Edge: " << edge.from << " " << edge.to << std::endl;
-            insertEdge(edge);
-        }
-        else if (type == MessageType::CLR_INC_CACHE)
-        {
-            while (!insert_cache.empty())
-            {
-                dInfo(world, "Inserting Cache");
-                Cache c = *insert_cache.begin();
-                insert_cache.erase(insert_cache.begin());
-                TreeNode &node = scc_tree_nodes.at(c.label);
-                clearInsertCache(node);
-                dTreeNode(node);
-            }
-            world.send(0, 0, STATUS::DONE_NO_NEW);
-        }
-    }
+    bool ret = (sccs[v1] == sccs[v2]);
+    bool ans;
+    boost::mpi::reduce(world, ret, ans, std::logical_and<bool>(), 0);
+    boost::mpi::broadcast(world, ans, 0);
+    return ans;
 }
 
 MaintainSCC::MaintainSCC(long int n, std::vector<Edge> &edges)
 {
     boost::mpi::communicator world;
+
     int world_rank = world.rank();
+    int max_threads = omp_get_max_threads();
+    int m = edges.size();
+
     world_size = world.size();
-
-    if (world_rank == 0)
-    {
-        SCC_LABEL = n + 1;
-        sccs.reserve(n+1);
-        for (long int i = 1; i <= n; i++)
-            sccs[i] = i;
-        findScc(edges, sccs);
-
-        std::cout << "Done FIND SCC\n" << std::endl;
-
-        std::unordered_map<long int, std::vector<Edge>> sccEdges;
-        std::vector<Edge> inter_scc_edges;
-        divideEdgesByScc(edges, sccs, sccEdges, inter_scc_edges, true);
-
-        std::cout << "Done DIVIDE EDGES\n" << std::endl;
-
-        std::unordered_map<long int, std::vector<long int>> sccNodes;
-        for (auto &scc : sccs)
-        {
-            sccNodes[scc.second].push_back(scc.first);
-            which_rank[scc.first] = scc.second % (world.size() - 1) + 1;
-        }
-
-        std::cout << "Done DIVIDE NODES\n" << std::endl;
-
-        std::cout << "Number of SCCs: " << sccNodes.size() << std::endl;
-        std::cout << "Set of Edge: " << sccEdges.size() << std::endl;
-
-        for(int i = 1; i<world_size; i++) {
-            world.send(i, 0, MessageType::LABELS);
-            world.send(i, 1, SCC_LABEL+i);
-        }
-
-        for(auto &scc_edge: sccEdges) {
-            int to_rank = which_rank[scc_edge.second[0].from];
-            world.send(to_rank, 0, MessageType::SCC_TREE);
-            world.send(to_rank, 1, sccNodes[scc_edge.first]);
-            world.send(to_rank, 2, scc_edge.second);
-        }
-
-        // for(auto &scc_node: sccNodes) {
-        //     int to_rank = which_rank[scc_node.second[0]];
-        //     world.send(to_rank, 0, MessageType::SCC_TREE);
-        //     world.send(to_rank, 1, scc_node.second);
-        //     world.send(to_rank, 2, sccEdges[scc_node.first]);
-        // }
-
-        changeSccLabels(sccs, sccNodes);
-        constructMasterNode(edges, sccs);
-
-        std::cout << "Done CONSTRUCT MASTER NODE\n" << std::endl;
-
-        // wait for the completion of the process
-        boost::mpi::request req[world.size()];
-        STATUS status[world.size()];
-        for (int i = 1; i < world.size(); i++)
-        {
-            req[i] = world.irecv(i, 0, status[i]);
-        }
-        boost::mpi::wait_all(req + 1, req + world.size());
-        std::cout << "Done WAITING\n" << std::endl;
+    SCC_LABEL = n + 1 + world_rank;
+    
+    for(int i = 1; i<=n; i++) {
+        sccs[i] = i;
     }
-    else
-        processMessage();
+
+    findScc(edges, sccs);
+
+    std::unordered_map<long int, std::vector<long int>> sccNodes;
+    for(const auto &scc: sccs) 
+        sccNodes[scc.second].push_back(scc.first);
+
+    changeSccLabels(sccs, sccNodes);
+
+    std::unordered_map<long int, std::vector<Edge>> sccEdges;
+    std::vector<Edge> inter_scc_edges;
+    divideEdgesByScc(edges, sccs, sccEdges, inter_scc_edges, true);
+
+    //update the sccNodes
+    sccNodes.clear();
+    for(const auto &scc: sccs) 
+        sccNodes[scc.second].push_back(scc.first);
+
+    int temp = 0;
+    //check and distribute the sccs
+    for(auto it = sccEdges.begin(); it != sccEdges.end(); it++) {
+        int scc_size = it->second.size();
+        if(scc_size > 0.1 * m) {
+            int to_rank = temp % (world_size - 1) + 1;
+            which_rank[it->first] = to_rank;
+            if(to_rank == world_rank){
+                makeSccTree(it->second, sccNodes[it->first], it->first);
+            }
+            temp++;
+        } else {
+            int to_rank = 0;
+            which_rank[it->first] = to_rank;
+            if(to_rank == world_rank)
+                makeSccTree(it->second, sccNodes[it->first], it->first);
+        }
+    }
+
+    //maitained by every node
+    constructMasterNode(inter_scc_edges, sccs);
+    world.barrier();
+    
+    for(auto root: roots) {
+        if(root == 0) continue;
+        dSccTree(root, scc_tree_nodes);
+    }
+
+    world.barrier();
+
+    dTreeNode(scc_tree_nodes[0]);
+
+    world.barrier();
 }
 
 void MaintainSCC::deleteEdges(std::vector<Edge> &decrement)
 {
     boost::mpi::communicator world;
     int world_rank = world.rank();
-    if (world_rank == 0)
-    {
-        for (auto &edge : decrement)
-        {
-            if (sccs[edge.from] == sccs[edge.to])
-            {
-                int to_rank = which_rank[edge.from];
-                world.send(to_rank, 0, MessageType::EDGE_DELETE);
-                world.send(to_rank, 1, edge);
-            }
-            else
-            {
-                deleteEdgeFromMaster(edge);
-            }
-        }
-        std::cout << "Deleted Edges" << std::endl;
-        for (int i = 1; i < world.size(); i++)
-        {
-            world.send(i, 0, MessageType::CLR_DEC_CACHE);
-        }
+    int max_threads = omp_get_max_threads();
 
-        // waiting for signal of completion
-        boost::mpi::request req[world.size()];
-        STATUS status[world.size()];
-        for (int i = 1; i < world.size(); i++)
-        {
-            req[i] = world.irecv(i, 0, status[i]);
-        }
-        boost::mpi::wait_all(req + 1, req + world.size());
-        
-        std::cout << "Done Delete-Cache Request" << std::endl;
-
-        for (int i = 1; i < world.size(); i++)
-        {
-            if (status[i] == STATUS::DONE_NEW)
-            {
-                std::vector<Edge> edges;
-                std::unordered_map<long int, long int> node_list;
-                // std::vector<std::pair<long int, int>> transfer_list;
-                world.recv(i, 1, edges);
-                world.recv(i, 2, node_list);
-                
-                for (auto &node : node_list)
-                {
-                    sccs[node.first] = node.second;
-                    int to_rank = node.second % (world.size() - 1) + 1;
-                    which_rank[node.first] = to_rank;
-                    // transfer_list.emplace_back(std::make_pair(node.first, to_rank));
-                }
-                updateMasterNode(0, edges, sccs);
-                world.recv(i, 0, status[i]);
-                std::cout << "Waited for New SCC completion" << std::endl;
+    //assuming every core has access to decrement edges
+    for(int i = 0; i<decrement.size(); i++) {
+        if(sccs[decrement[i].from] == sccs[decrement[i].to]) {
+            int scc_label = sccs[decrement[i].from];
+            int to_rank = which_rank[scc_label];
+            if(to_rank == world_rank) {
+                deleteEdge(decrement[i]);
             }
+        } else {
+            deleteEdgeFromMaster(decrement[i]);
         }
-
-        std::cout << "Done DELETE EDGES\n" << std::endl;
     }
+
+    bool new_scc = clearDeleteCache();
+    
+    if(new_scc) {
+        updateMasterNode();
+    }
+
+    world.barrier();
 }
 
 void MaintainSCC::insertEdges(std::vector<Edge> &increament)
 {
     boost::mpi::communicator world;
     int world_rank = world.rank();
-    if (world_rank == 0)
-    {
-        std::vector<Edge> insert_in_master;
-        for (auto &edge : increament)
-        {
-            if (sccs[edge.from] == sccs[edge.to])
-            {
-                int to_rank = which_rank[edge.from];
-                world.send(to_rank, 0, MessageType::EDGE_INSERT);
-                world.send(to_rank, 1, edge);
-            }
-            else
-            {
-                insert_in_master.push_back(edge);
-            }
-        }
-        if (!insert_in_master.empty()) 
-            insertEdgesInMaster(insert_in_master);
-        for (int i = 0; i < world.size(); i++)
-        {
-            world.send(i, 0, MessageType::CLR_INC_CACHE);
-        }
 
-        // waiting for signal of completion
-        boost::mpi::request req[world.size()];
-        STATUS status[world.size()];
-        for (int i = 1; i < world.size(); i++)
-        {
-            req[i] = world.irecv(i, 0, status[i]);
+    for(int i = 0; i<increament.size(); i++) {
+        if(sccs[increament[i].from] == sccs[increament[i].to]) {
+            int scc_label = sccs[increament[i].from];
+            int to_rank = which_rank[scc_label];
+            if(to_rank == world_rank) {
+                insertEdge(increament[i]);
+            }
+        } else {
+            insertEdgeInMaster(increament[i]);
         }
-        boost::mpi::wait_all(req + 1, req + world.size());
     }
+
+    updateMasterNode();
+    world.barrier();
 }
 
-void MaintainSCC::endAll()
+int MaintainSCC::getNumberOfSCCs()
 {
     boost::mpi::communicator world;
-    if (world.rank() == 0)
-    {
-        for (int i = 1; i < world.size(); i++)
-        {
-            world.send(i, 0, MessageType::EXIT);
-        }
-    }
-}
-
-MaintainSCC::~MaintainSCC()
-{
-    endAll();
+    int n = scc_tree_nodes[0].contains.size();
+    int ret = -1;
+    // find the max number of sccs
+    boost::mpi::reduce(world, n, ret, boost::mpi::maximum<int>(), 0);
+    boost::mpi::broadcast(world, ret, 0);
+    return ret;
 }
 
 }
