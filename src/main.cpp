@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
 
   world.barrier();
   int num_of_sccs = scc.getNumberOfSCCs();
-  // if(world.rank() == 0) {
-  //   std::cout << "Number of SCCs: " << num_of_sccs << std::endl;
-  // }
+  if(world.rank() == 0) {
+    std::cout << "Number of SCCs: " << num_of_sccs << std::endl;
+  }
 
 
   world.barrier();
